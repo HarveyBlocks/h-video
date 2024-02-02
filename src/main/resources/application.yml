@@ -1,0 +1,61 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: h-video
+  datasource:
+    url: jdbc:mysql://centos:3306/h_video?useSSL=false&serverTimezone=UTC
+    username: root
+    password: 123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  redis:
+    host: centos
+    port: 6379
+    password: 123456
+    lettuce:
+      pool:
+        max-active: 10
+        max-idle: 10
+        min-idle: 1
+        time-between-eviction-runs: 10s
+  jackson:
+    default-property-inclusion: non_null # JSON处理时忽略非空字段,但是, 我不太想把它忽略啊, 会吃苦头
+logging:
+  level:
+    com.harvey.hvideo: debug
+  pattern:
+    dateformat: HH:mm:ss:SSS
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+  type-aliases-package: com.harvey.hvideo.pojo.entity
+knife4j:
+  enable: true
+  openapi:
+    title: h-video
+    description: "视频系统接口文档,被拦截的用户(未登录的),将没有返回值, 而是statueCode = 401"
+    email: harvey.blocks@outlook.com
+    concat: Harvey Blocks
+    url: https://www.baidu.com
+    version: v1.0.0
+    group:
+      default:
+        group-name: default
+        api-rule: package
+        api-rule-resources:
+          - com.harvey.hvideo.controller
+# jwt配置
+h-video:
+  jwt:
+    location: classpath:hmall.jks
+    alias: hmall
+    password: hmall123 # 解析文件的密钥(文件本身也是密钥)
+    tokenTTL: 2400h
+  auth:
+    includePaths:
+      - "/user/logout"
+      - "/user/me"
+      - "/user/update"
+      - "/user/create"
+      - "/upload/**"
