@@ -80,6 +80,16 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         }
 
         @Override
+        public boolean equals(Object obj) {
+            return super.equals(obj);
+        }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode();
+        }
+
+        @Override
         public String getValue() {
             return video.getId().toString();
         }

@@ -226,7 +226,7 @@ PUT /video
 点击量+时间, sortedSet,检查存在,然后10min时间一到删除Set内的userId(SpringTask)
 直接删除值在10到15之间的member:
 ```redis
-zRemRangeByScore zSetKey 10 50
+zRemRangeByScore shop:geo:1 10 50
 ```
 
 视频默认排序

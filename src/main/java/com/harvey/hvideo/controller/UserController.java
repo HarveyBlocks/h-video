@@ -104,7 +104,7 @@ public class UserController {
      */
     @ApiOperation("登出")
     @PostMapping("/logout")
-    public Result<Null> logout(HttpServletRequest request, HttpServletResponse response) {
+    public Result<Null> logout(HttpServletResponse response) {
         String tokenKey = RedisConstants.LOGIN_USER_KEY + UserHolder.currentUserId();
         stringRedisTemplate.delete(tokenKey);
         UserHolder.removeUser();// Interceptor会做,多此一举
@@ -125,7 +125,7 @@ public class UserController {
     @GetMapping("/{id}")
     @ApiOperation("根据id查询用户")
     public Result<UserDTO> queryUserById(@PathVariable("id") Long userId) {
-        UserDTO userDTO = null;
+        UserDTO userDTO;
         try {
             userDTO = userService.queryUserByIdWithRedisson(userId);
         } catch (InterruptedException e) {
@@ -141,7 +141,7 @@ public class UserController {
     @GetMapping("/create")
     @ApiOperation(value = "测试用接口,生成虚假的User", notes = "生成100个虚假的用户,存入Redis")
     public Result<UserDTO> createUser() {
-        for (int i = 0; i < 0; i++) {
+        for (int i = 0; i < 1; i++) {
             Map<String, String> map = new HashMap<>();
             int token = i + 10000;
             System.out.println(token);

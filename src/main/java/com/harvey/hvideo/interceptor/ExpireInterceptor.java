@@ -27,7 +27,6 @@ public class ExpireInterceptor implements HandlerInterceptor {
     private final JwtTool jwtTool;
 
     public ExpireInterceptor(StringRedisTemplate stringRedisTemplate, JwtTool jwtTool) {
-        ;
         this.stringRedisTemplate = stringRedisTemplate;
         this.jwtTool = jwtTool;
     }
