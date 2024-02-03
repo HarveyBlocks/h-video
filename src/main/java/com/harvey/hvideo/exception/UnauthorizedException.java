@@ -10,7 +10,7 @@ package com.harvey.hvideo.exception;
 public class UnauthorizedException extends BadRequestException{
     @Override
     public int getCode() {
-        return 404;
+        return 401;
     }
     public UnauthorizedException(){
         super();

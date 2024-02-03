@@ -7,10 +7,8 @@ import com.harvey.hvideo.util.JwtTool;
 import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
@@ -28,7 +26,8 @@ public class ExpireInterceptor implements HandlerInterceptor {
     private final StringRedisTemplate stringRedisTemplate;
     private final JwtTool jwtTool;
 
-    public ExpireInterceptor(StringRedisTemplate stringRedisTemplate,JwtTool jwtTool) {;
+    public ExpireInterceptor(StringRedisTemplate stringRedisTemplate, JwtTool jwtTool) {
+        ;
         this.stringRedisTemplate = stringRedisTemplate;
         this.jwtTool = jwtTool;
     }
@@ -62,12 +61,21 @@ public class ExpireInterceptor implements HandlerInterceptor {
 
 //        System.err.println("3");
 
-        // 第三个参数: 是否忽略转换过程中产生的异常
-        UserDTO user = BeanUtil.fillBeanWithMap(userFieldMap, new UserDTO(), false);
         // 更新时间
-        if(RedisConstants.LOGIN_USER_TTL!=-1L){
+        if (RedisConstants.LOGIN_USER_TTL != -1L) {
             stringRedisTemplate.expire(tokenKey, RedisConstants.LOGIN_USER_TTL, TimeUnit.MINUTES);
         }
+
+        String time = (String) userFieldMap.get("time");
+        if ("0".equals(time)) {
+            return false;
+        } else {
+            stringRedisTemplate.opsForHash().increment(tokenKey, "time", -1);
+        }
+        userFieldMap.remove("time");
+        // 第三个参数: 是否忽略转换过程中产生的异常
+        UserDTO user = BeanUtil.fillBeanWithMap(userFieldMap, new UserDTO(), false);
+
 
 //        System.err.println("4");
 
@@ -82,7 +90,14 @@ public class ExpireInterceptor implements HandlerInterceptor {
                                 HttpServletResponse response,
                                 Object handler, Exception ex)
             throws Exception {
-        // 完成Controller之后移除UserHolder, 以防下一次用这条线程的请求获取到不属于它的用户信息
-        UserHolder.removeUser();
+
+        try {
+            String tokenKey = RedisConstants.LOGIN_USER_KEY + UserHolder.currentUserId();
+            stringRedisTemplate.opsForHash().increment(tokenKey, "time", 1);
+
+            // 完成Controller之后移除UserHolder, 以防下一次用这条线程的请求获取到不属于它的用户信息
+            UserHolder.removeUser();
+        } catch (Exception ignored) {
+        }
     }
 }

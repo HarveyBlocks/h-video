@@ -26,6 +26,7 @@ import reactor.util.annotation.NonNull;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -90,6 +91,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User loginByPassword(String phone, String password) {
+        if (!RegexUtils.isPasswordEffective(password)) {
+            throw new BadRequestException("密码格式不正确,应是4~32位的字母、数字、下划线");
+        }
         // 依据电话号码从service取数据
         User user = selectByPhone(phone);
         // 取出来的数据和密码作比较
@@ -125,7 +129,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 无法决定是密码登录还是验证码登录的情况
             throw new BadRequestException("请正确输入验证码或密码");
         }
-        if (code != null) {
+        if (code != null&&!code.isEmpty()) {
             if (code.length() != 6) {
                 throw new BadRequestException("请输入正确格式的验证码");
             }
@@ -142,7 +146,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 stringRedisTemplate.delete(RedisConstants.LOGIN_CODE_KEY + phone);
                 // 否则不删除会话,给用户一个再次输入验证码的机会
             }
-        } else /*if(password!=null)*/ {
+        } else /*if(password!=null&&!password.isEmpty())*/ {
             user = this.loginByPassword(phone, password);
             if (user == null) {
                 throw new UnauthorizedException("密码不正确");
@@ -252,7 +256,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (userFieldMap.isEmpty()) {
             // Redis里没有数据
             log.debug("缓存不存在用户:" + userId);
-            String lockKey = RedisConstants.USER_LOCK_KEY + userId;
+            String lockKey = RedisConstants.USER_LOCK_KEY + UserHolder.currentUserId();
             return redissonLock.asynchronousLock(lockKey, ()-> getFromDbAndWriteToCache(userId, key));
         } else if (((String) userFieldMap.get("id")).isEmpty()) {
             log.warn("Redis中存在的假数据" + userId);
@@ -260,6 +264,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 在Redis中有正常的数据
         // 第三个参数: 是否忽略转换过程中产生的异常
+        userFieldMap.remove("time");
         try {
             return BeanUtil.fillBeanWithMap(userFieldMap, new UserDTO(), false);
         } catch (Exception e) {
@@ -268,19 +273,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
     }
 
-    private void saveUser2Redis(String key, Map<String, String> map2Redis, Long ttl) {
-        stringRedisTemplate.opsForHash().putAll(key, map2Redis);
-        if (-1 != ttl) {
-            stringRedisTemplate.expire(key, ttl, TimeUnit.SECONDS);
-        }
-    }
+
+
 
     private static Map<String, String> user2Map(UserDTO user) {
         return Map.of(
                 "id", user.getId().toString(),
                 "nickName", user.getNickName(),
                 "role", user.getRole().toString(),
-                "icon", user.getIcon()
+                "icon", user.getIcon(),
+                "time",Constants.RESTRICT_REQUEST_TIMES
         );
     }
 
@@ -316,6 +318,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userDTO;
     }
 
+    private void saveUser2Redis(String key, Map<String, String> map2Redis, Long ttl) {
+        stringRedisTemplate.opsForHash().putAll(key, map2Redis);
+        if (-1 != ttl) {
+            stringRedisTemplate.expire(key, plusRandomSec(ttl), TimeUnit.SECONDS);
+        }
+    }
+    /**
+     * 通过随机改变ttl, 防止雪崩
+     * @return 增加了随机值的ttl
+     */
+    private Long plusRandomSec(Long ttl) {
+        long random;
+        if (ttl <= 10L) {
+            random = 0;
+        } else {
+            long exSec = ttl / 10;
+            random = RandomUtil.randomLong(-exSec, exSec);
+        }
+        LocalDateTime time = LocalDateTime.now().plusSeconds(ttl + random);
+        return time.toEpochSecond(ZoneOffset.of("+8"));
+    }
 
     /**
      * 使用了Redis做了缓存
@@ -330,7 +353,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public UserDTO queryUserById(Long userId) {
         log.debug("queryMutexFixByLock");
         String key = RedisConstants.LOGIN_USER_KEY + userId;
-
         while (true) {
             // 从缓存查
             log.debug("用户:" + userId + "从缓存查");
@@ -367,6 +389,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 在Redis中有正常的数据
 
             // 第三个参数: 是否忽略转换过程中产生的异常
+            userFieldMap.remove("time");
             try {
                 return BeanUtil.fillBeanWithMap(userFieldMap, new UserDTO(), false);
             } catch (Exception e) {
@@ -392,6 +415,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 这样很不好
         // 所以我不做了,而且有Redisson分布式锁帮我解决问题
         // 主从一致性
+        // 啊啊啊啊啊啊~还是做了~因为Redisson帮我做好了
         return exit != null && exit;
     }
 

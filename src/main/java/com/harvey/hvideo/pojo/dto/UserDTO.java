@@ -19,6 +19,7 @@ import lombok.Data;
 public class UserDTO {
     @ApiModelProperty(value = "用户权限",example = "1为普通用户,2为vip(没有)")
     private Integer role;
+    @ApiModelProperty("用户主键")
     private Long id;
     @ApiModelProperty("昵称")
     private String nickName;

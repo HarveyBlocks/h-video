@@ -1,5 +1,6 @@
 package com.harvey.hvideo.util;
 
+import com.harvey.hvideo.exception.UnauthorizedException;
 import com.harvey.hvideo.pojo.dto.UserDTO;
 
 /**
@@ -24,6 +25,10 @@ public class UserHolder {
         TL.remove();
     }
     public static Long currentUserId(){
-        return TL.get().getId();
+        try {
+            return TL.get().getId();
+        } catch (NullPointerException e) {
+            throw new UnauthorizedException("未登录");
+        }
     }
 }

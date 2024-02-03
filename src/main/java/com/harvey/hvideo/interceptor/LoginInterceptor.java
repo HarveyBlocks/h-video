@@ -1,11 +1,8 @@
 package com.harvey.hvideo.interceptor;
 
-import com.harvey.hvideo.util.Constants;
 import com.harvey.hvideo.util.UserHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import javax.naming.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 

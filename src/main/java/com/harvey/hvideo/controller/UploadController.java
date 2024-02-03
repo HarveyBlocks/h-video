@@ -22,7 +22,7 @@ import java.io.IOException;
  */
 @Slf4j
 @RestController
-@Api(tags = "上传或删除文件, 包括视频和头像")
+@Api(tags = "上传或删除文件")
 @RequestMapping("upload")
 public class UploadController {
 

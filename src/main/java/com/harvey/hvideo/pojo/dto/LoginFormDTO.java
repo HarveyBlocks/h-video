@@ -18,6 +18,6 @@ public class LoginFormDTO {
     private String phone;
     @ApiModelProperty("短信验证码")
     private String code;
-    @ApiModelProperty("密码")
+    @ApiModelProperty("密码,会在后端做正则的校验,4~32位的字母数字下划线")
     private String password;
 }

@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @RestController
-@Api("用户登录校验Controller")
+@Api(tags = "用户登录校验")
 @RequestMapping("/user")
 public class UserController {
     @Resource
