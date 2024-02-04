@@ -33,7 +33,7 @@ public class UploadController {
     @PostMapping("video")
     public Result<String> uploadVideo(@RequestParam("file") MultipartFile video) {
         try {
-            return new Result<>(uploadService.saveFile(Constants.VIDEO_UPLOAD_DIR,video));
+            return new Result<>(uploadService.saveVideoFile(Constants.VIDEO_UPLOAD_DIR,video));
         } catch (IOException e) {
             throw new RuntimeException("文件上传失败", e);
         }
@@ -54,7 +54,7 @@ public class UploadController {
     @PostMapping("/icon")
     public Result<String> uploadIcon(@RequestParam("file") MultipartFile image) {
         try {
-            return new Result<>(uploadService.saveFile(Constants.IMAGE_UPLOAD_DIR, image));
+            return new Result<>(uploadService.saveImageFile(Constants.IMAGE_UPLOAD_DIR, image));
         } catch (IOException e) {
             throw new RuntimeException("文件上传失败", e);
         }

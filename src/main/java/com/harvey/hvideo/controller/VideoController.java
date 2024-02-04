@@ -3,6 +3,7 @@ package com.harvey.hvideo.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.VideoDTO;
 import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
@@ -36,11 +38,11 @@ public class VideoController {
 
     @ApiOperation("保存视频")
     @PostMapping
-    public Result<Long> saveVideo(@RequestBody Video video) {
+    public Result<Null> saveVideo(@RequestBody Video video) {
         // 获取登录用户
         UserDTO user = UserHolder.getUser();
         video.setUserId(user.getId());
-        // 保存探店博文
+        // 保存视频
         try {
             boolean saved = videoService.save(video);
             if (saved) {
@@ -53,25 +55,12 @@ public class VideoController {
             throw new RuntimeException("未能成功保存视频");
         }
         // 返回id
-        return new Result<>(video.getId());
-    }
-
-
-    /**
-     * 点击
-     *
-     * @param videoId 视频ID
-     * @return 是否点击
-     */
-    @ApiOperation("点击视频,待删除")
-    @PutMapping("/click/{id}")
-    public Result<Null> clickVideo(@PathVariable("id") Long videoId) {
-        videoService.clickVideo(videoId);
         return Result.ok();
     }
 
     @GetMapping("/{id}")
     public Result<Video> viewVideo(@PathVariable("id")  Long id) {
+        videoService.clickVideo(id);
         return new Result<>(videoService.viewVideo(id));
     }
 
@@ -83,7 +72,7 @@ public class VideoController {
      */
     @ApiOperation("查询自己发布的视频")
     @GetMapping("/of/me")
-    public Result<List<Video>> queryMyVideo(
+    public Result<List<VideoDTO>> queryMyVideo(
             @RequestParam(value = "current", defaultValue = "1")
             @ApiParam("页码,[1,...),默认1") Integer current) {
         return new Result<>(videoService.queryMyVideo(current));
@@ -91,7 +80,7 @@ public class VideoController {
 
     @ApiOperation("滚动分页查询关注的人发布的视频")
     @GetMapping("/of/follow")
-    public Result<ScrollResult<Video>> followVideos(
+    public Result<ScrollResult<VideoDTO>> followVideos(
             @RequestParam("lastId")
             @ApiParam("上一次查询的最后一个Video的标识,第一次传当前时间,后来的偏移量后端会传给你的, 下一次请求就再把这个标识传给后端")
             Long lastTimestamp,
@@ -102,23 +91,38 @@ public class VideoController {
     }
 
     /**
-     * 热门视频
+     * 热门视频 TODO ES, Click排序
      *
      * @param current 当前页码
      * @return 热门视频集合
      */
     @ApiOperation("查询热门视频(关于点击量)")
     @GetMapping("/hot")
-    public Result<List<Video>> queryHotVideo(
+    public Result<List<VideoDTO>> queryHotVideo(
             @RequestParam(value = "current", defaultValue = "1")
             @ApiParam("页码,[1,...),默认1") Integer current) {
         return new Result<>(videoService.queryHotVideo(current));
     }
-
+    /**
+     * TODO ES, 依据tittle排序
+     *
+     * @param current 当前页码
+     * @return 热门视频集合
+     */
+    @ApiOperation("查询热门视频(关于点击量)")
+    @GetMapping("/search")
+    public Result<List<VideoDTO>> queryVideoByTittle(
+            @RequestParam(value = "current", defaultValue = "1")
+            @ApiParam("页码,[1,...),默认1") Integer current,
+            @RequestParam(value = "tittle", defaultValue = "1")
+            @ApiParam("视频标题") String tittle) {
+        videoService.saveSearchHistory(tittle);
+        return new Result<>(videoService.queryVideoByTittle(current,tittle));
+    }
 
     @ApiOperation("查询某用户的视频")
     @GetMapping("/of/user")
-    public Result<List<Video>> queryVideoByUserId(
+    public Result<List<VideoDTO>> queryVideoByUserId(
             @RequestParam(value = "current", defaultValue = "1")
             @ApiParam("页码,[1,...),默认1") Integer current,
             @RequestParam("id") @ApiParam("用户id") Long id) {
@@ -127,6 +131,9 @@ public class VideoController {
                 .eq("user_id", id).page(new Page<>(current, Constants.MAX_PAGE_SIZE));
         // 获取当前页数据
         List<Video> records = page.getRecords();
-        return new Result<>(records);
+        return new Result<>(records
+                .stream().map(VideoDTO::new).collect(Collectors.toList()));
     }
+
+
 }

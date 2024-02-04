@@ -4,17 +4,24 @@ package com.harvey.hvideo.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.harvey.hvideo.exception.BadRequestException;
+import com.harvey.hvideo.pojo.vo.FileWithUserId;
 import com.harvey.hvideo.service.UploadService;
+import com.harvey.hvideo.util.RedissonLock;
+import com.harvey.hvideo.util.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
- *
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0
  * @date 2024-02-02 09:52
@@ -25,7 +32,7 @@ public class UploadServiceImpl implements UploadService {
 
 
     @Override
-    public  void deleteFile(final String constDir, String filename) {
+    public void deleteFile(final String constDir, String filename) {
         File file = new File(constDir, filename);
         if (file.isDirectory()) {
             throw new BadRequestException("错误的文件名称");
@@ -54,16 +61,89 @@ public class UploadServiceImpl implements UploadService {
     }
 
     @Override
-    public String saveFile(final String constDir, MultipartFile file) throws IOException {
+    public String saveVideoFile(final String constDir, MultipartFile file) throws IOException {
         // 获取原始文件名称
         String originalFilename = file.getOriginalFilename();
         // 生成新文件名
-        String fileName = createNewFileName(constDir,originalFilename);
+        String fileName = createNewFileName(constDir, originalFilename);
         // RE
         file.transferTo(new File(constDir, fileName));
-        // 返回结果
+        boolean added = ORDER_QUEUE.add(new FileWithUserId(file,new File(constDir, fileName),UserHolder.currentUserId()));
+        if (added){
+            // 返回结果
+            log.debug("文件上传成功，{}", fileName);
+        }else {
+            log.error("文件上传失败，{}", fileName);
+        }
+        return fileName;
+    }
+    @Override
+    public String saveImageFile(final String constDir, MultipartFile file) throws IOException {
+        // 获取原始文件名称
+        String originalFilename = file.getOriginalFilename();
+        // 生成新文件名
+        String fileName = createNewFileName(constDir, originalFilename);
+        // RE
+        file.transferTo(new File(constDir, fileName));
         log.debug("文件上传成功，{}", fileName);
         return fileName;
     }
 
+
+    // 线程池
+    private static final ExecutorService SAVE_VIDEO_FILE_EXECUTOR = Executors.newSingleThreadExecutor();
+
+    /**
+     * 异步保存视频<br>
+     * 由于这一任务就好像垃圾处理机制一样, 需要时刻准备下单, 需要在服务器一起动时就开启<br>
+     * 故使用了@PostConstruct
+     *
+     * @see javax.annotation.PostConstruct
+     */
+    @PostConstruct
+    private void asynchronousSaveVideoFile() {
+        SAVE_VIDEO_FILE_EXECUTOR.submit(
+                this::saveVideoFileByQueue
+        );
+    }
+    private static final BlockingQueue<FileWithUserId> ORDER_QUEUE = new ArrayBlockingQueue<>(1024 * 1024/*指定队列长度*/);
+
+
+    public void saveVideoFileByQueue() {
+        while (true) {
+            try {
+                // 获取队列中的订单信息
+                FileWithUserId fileWithUserId = ORDER_QUEUE.take();
+                handleVideoFile(fileWithUserId);
+            } catch (InterruptedException ie) {
+                log.error("处理订单发生线程异常", ie);
+            } catch (Exception e) {
+                log.error("处理订单发生其他异常", e);
+            }
+        }
+    }
+    private final RedissonLock<Exception> redissonLock;
+
+    public UploadServiceImpl(RedissonLock<Exception> redissonLock) {
+        this.redissonLock = redissonLock;
+    }
+    private void handleVideoFile(FileWithUserId file) throws InterruptedException {
+        if (file == null) {
+            return;
+        }
+        Exception exception = redissonLock
+                .asynchronousLock("lock:voucher:order:" + file.getUserId(),
+                        () -> {
+                            try {
+                                file.getFile().transferTo(file.getTarget());
+                            } catch (Exception e) {
+                                return e;
+                            }
+                            return null;
+                        }
+                );
+        if (exception!=null){
+            log.error("用户:`"+file.getUserId()+"`的视频`"+file.getTarget().getAbsolutePath()+"`保存失败",exception);
+        }
+    }
 }

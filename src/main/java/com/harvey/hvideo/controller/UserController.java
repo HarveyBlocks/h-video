@@ -116,7 +116,7 @@ public class UserController {
     @GetMapping("/me")
     public Result<UserDTO> me() {
         // 获取当前登录的用户并返回
-        return Result.ok(UserHolder.getUser(), UserDTO.class);
+        return new Result<>(UserHolder.getUser());
     }
 
     /**
@@ -151,7 +151,7 @@ public class UserController {
             map.put("icon", "");
             stringRedisTemplate.opsForHash().putAll(key, map);
         }
-        return Result.ok(new UserDTO(1, 1L, "nickName", "icon"), UserDTO.class);
+        return new Result(new UserDTO(1, 1L, "nickName", "icon"));
     }
 
     @Resource
@@ -168,7 +168,7 @@ public class UserController {
             uploadService.deleteFile(Constants.IMAGE_UPLOAD_DIR, UserHolder.getUser().getIcon());
         }
         userService.updateUser(userDTO, request.getHeader(Constants.AUTHORIZATION_HEADER));
-        return null;
+        return Result.ok();
     }
 
 

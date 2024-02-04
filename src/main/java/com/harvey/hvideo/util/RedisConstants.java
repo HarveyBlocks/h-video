@@ -22,4 +22,5 @@ public class RedisConstants {
     public static final String USER_LOCK_KEY = "video:lock:user:";
     public static final long LOCK_TTL = 6 * 60L;
     public static final String VIDEO_CLICKED_KEY = "video:video:clicked:";
+    public static final String SEARCH_HISTORY = "video:user:search:history:";
 }

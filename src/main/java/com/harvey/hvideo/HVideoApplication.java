@@ -4,6 +4,8 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 
 /**
  * 启动类
@@ -15,6 +17,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @MapperScan(basePackages = "com.harvey.hvideo.dao")
 @SpringBootApplication
 @EnableAspectJAutoProxy(exposeProxy = true)
+@EnableScheduling
 public class HVideoApplication {
     public static void main(String[] args) {
         SpringApplication.run(HVideoApplication.class, args);

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.harvey.hvideo.dao.VideoMapper;
 import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.VideoDTO;
 import com.harvey.hvideo.pojo.entity.Follow;
 import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.pojo.entity.Video;
@@ -13,10 +14,13 @@ import com.harvey.hvideo.service.FollowService;
 import com.harvey.hvideo.service.UserService;
 import com.harvey.hvideo.service.VideoService;
 import com.harvey.hvideo.util.Constants;
+import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.UserHolder;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +28,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
@@ -44,46 +49,66 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         return video;
     }
 
-
-    @Override
-    public List<Video> queryHotVideo(Integer current) {
-        // 根据用户查询
-        Page<Video> page = this.query()
-                .orderByDesc("clicked")
-                .page(new Page<>(current, Constants.MAX_PAGE_SIZE));
-        // 获取当前页数据
-        List<Video> records = page.getRecords();
-        // 查询用户
-        records.forEach(this::addAuthor);
-        return records;
-    }
-
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
-
-
-    @Override
     @Transactional
+    @Override
     public void clickVideo(Long videoId) {
         String userId = UserHolder.currentUserId().toString();
         String clickedSetKey = VideoService.clickedSetKey(videoId);
         boolean clicked = checkIsMember(clickedSetKey, userId);
-        VideoService videoService = (VideoService) AopContext.currentProxy();
+        VideoService proxy = (VideoService) AopContext.currentProxy();
         if (clicked) {
             // 不算点击量
             return;
         }
         // 增加点击量
-        boolean updateSuccess = videoService.update()
-                .setSql("clicked = clicked + 1").eq("id", videoId).update();
+        boolean updateSuccess = proxy.update()
+                .setSql("click = click + 1").eq("id", videoId).update();
         if (updateSuccess) {
-            stringRedisTemplate.opsForZSet().add(clickedSetKey, userId, System.currentTimeMillis());
+            stringRedisTemplate.opsForSet().add(clickedSetKey, userId);
         }
-
+    }
+    private Boolean checkIsMember(String setKey, String userId) {
+        return Boolean.TRUE.equals(
+                stringRedisTemplate.opsForSet().isMember(setKey, userId));
     }
 
+    /**
+     * 每十分钟删除视频点击记录
+     */
+    @Component
+    class ClickService {
+        @Scheduled(cron="0 0/10 * * * *")
+        public void delClickedHistory(){
+            Set<String> keys = stringRedisTemplate
+                    .keys(RedisConstants.VIDEO_CLICKED_KEY+"*");
+            if(keys==null||keys.isEmpty()){
+                return;
+            }
+            stringRedisTemplate.delete(keys);
+            log.debug("完成一次清空观看记录");
+        }
+    }
+
+
+
     @Override
-    public List<Video> queryMyVideo(Integer current) {
+    public List<VideoDTO> queryHotVideo(Integer current) {
+        // 根据用户查询
+        Page<Video> page = this.query()
+                .orderByDesc("click")
+                .page(new Page<>(current, Constants.MAX_PAGE_SIZE));
+        // 获取当前页数据
+        List<Video> records = page.getRecords();
+        // 查询用户
+        records.forEach(this::addAuthor);
+        return records.stream()
+                .map(VideoDTO::new).collect(Collectors.toList());
+    }
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+    @Override
+    public List<VideoDTO> queryMyVideo(Integer current) {
         // 获取登录用户
         UserDTO user = UserHolder.getUser();
         // 根据用户查询
@@ -91,7 +116,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 .eq("user_id", user.getId())
                 .page(new Page<>(current, Constants.MAX_PAGE_SIZE));
         // 获取当前页数据
-        return page.getRecords();
+        return page.getRecords().stream()
+                .map(VideoDTO::new).collect(Collectors.toList());
     }
 
     @Resource
@@ -129,7 +155,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public ScrollResult<Video> queryFollowVideos(Long lastTimestamp, Integer offset) {
+    public ScrollResult<VideoDTO> queryFollowVideos(Long lastTimestamp, Integer offset) {
         Set<ZSetOperations.TypedTuple<String>> typedTuples
                 = getVideoIdsWithTimestamp(lastTimestamp, offset);
         if (typedTuples == null || typedTuples.isEmpty()) {
@@ -162,7 +188,24 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         List<Video> videos = queryCompleteVideos(videoIds);
         log.debug("newOffset=" + newOffset);
         log.debug("minTime=" + minTime);
-        return new ScrollResult<>(videos, minTime, newOffset);
+        return new ScrollResult<>(videos.stream()
+                .map(VideoDTO::new).collect(Collectors.toList()), minTime, newOffset);
+    }
+
+
+    /**
+     * TODO ES 依据tittle查询
+     * @param current 当前页码
+     */
+    @Override
+    public List<VideoDTO> queryVideoByTittle(Integer current, String tittle) {
+        return null;
+    }
+    @Override
+    public void saveSearchHistory(String tittle) {
+        // 保存查询记录
+        String searchHistoryKey = RedisConstants.SEARCH_HISTORY+UserHolder.currentUserId();
+        stringRedisTemplate.opsForSet().add(searchHistoryKey,tittle);
     }
 
 
@@ -176,9 +219,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
 
-    private Boolean checkIsMember(String setKey, String userId) {
-        return stringRedisTemplate.opsForZSet().score(setKey, userId) != null;
-    }
+
 
 
     private void addAuthor(Video video) {

@@ -15,5 +15,7 @@ public interface UploadService {
     void deleteFile(String constDir, String filename);
 
 
-    String saveFile(String constDir, MultipartFile file) throws IOException;
+    String saveVideoFile(String constDir, MultipartFile file) throws IOException;
+
+    String saveImageFile(String constDir, MultipartFile file) throws IOException;
 }
