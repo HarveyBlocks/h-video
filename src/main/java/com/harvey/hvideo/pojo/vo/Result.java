@@ -45,32 +45,4 @@ public class Result<T> {
     public static Result<Null> ok() {
         return new Result<>(200, null, null);
     }
-
-    public static <E> Result<E> ok(Object data, Class<E> resultType) {
-        if(data==null||resultType==null){
-            throw  new IllegalArgumentException("param can not be null");
-        }
-        Class<?> dataClass = data.getClass();
-        if (!dataClass.equals(resultType)&&!dataClass.isInstance(resultType)) {
-            throw new IllegalArgumentException();
-        }
-//        System.out.println(resultType);
-        return new Result<>(200, null, (E) data);
-    }
-
-
-
-    public static Result<Null> fail(Integer code, String errorMsg) {
-        return new Result<>(code, errorMsg, null);
-    }
-
-    public static Result<Null> fail(String errorMsg) {
-        return new Result<>(500, errorMsg, null);
-    }
-    public static  <E>  Result<E> fail(Integer code, String errorMsg,Class<E> resultType) {
-        return new Result<>(code, errorMsg, null);
-    }
-    public static  <E>  Result<E> fail(String errorMsg,Class<E> resultType) {
-        return new Result<>(500, errorMsg, null);
-    }
 }

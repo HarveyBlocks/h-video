@@ -4,12 +4,12 @@ spring:
   application:
     name: h-video
   datasource:
-    url: jdbc:mysql://centos:3306/h_video?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://${h-video.db.host}:3306/h_video?useSSL=false&serverTimezone=UTC
     username: root
     password: 123
     driver-class-name: com.mysql.cj.jdbc.Driver
   redis:
-    host: centos
+    host: ${h-video.redis.host}
     port: 6379
     password: 123456
     lettuce:
@@ -20,6 +20,8 @@ spring:
         time-between-eviction-runs: 10s
   jackson:
     default-property-inclusion: non_null # JSON处理时忽略非空字段,但是, 我不太想把它忽略啊, 会吃苦头
+  main:
+    allow-circular-references: true # 允许循环依赖
 logging:
   level:
     com.harvey.hvideo: debug
@@ -53,9 +55,19 @@ h-video:
     password: hmall123 # 解析文件的密钥(文件本身也是密钥)
     tokenTTL: 2400h
   auth:
-    includePaths:
+    include-paths:
       - "/user/logout"
       - "/user/me"
       - "/user/update"
       - "/user/create"
-      - "/upload/**"
+      - "/upload/video/**"
+    root-auth-paths:
+      - "/user/create"
+  constants:
+    authorization-header: "authorization"
+    video-upload-dir: ${h-video.file-save-path.video}
+    image-upload-dir: ${h-video.file-save-path.img}
+    restrict-request-times: "20"
+    clear-click-history-wait-seconds: 600
+    max-page-size: 10
+    default-page-size: 5

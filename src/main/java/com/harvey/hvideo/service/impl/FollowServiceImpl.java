@@ -11,7 +11,7 @@ import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.service.FollowService;
 import com.harvey.hvideo.service.UserService;
 import com.harvey.hvideo.service.VideoService;
-import com.harvey.hvideo.util.Constants;
+import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.util.TimeUtil;
 import com.harvey.hvideo.util.UserHolder;
 import org.springframework.aop.framework.AopContext;

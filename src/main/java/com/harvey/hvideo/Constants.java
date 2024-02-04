@@ -1,4 +1,7 @@
-package com.harvey.hvideo.util;
+package com.harvey.hvideo;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 import java.util.Set;
 
@@ -17,4 +20,5 @@ public class Constants {
     public static final Set<String> ROOT_AUTH_URI = Set.of("/user/create");
     public static final Integer MAX_PAGE_SIZE = 10;
     public static final Integer DEFAULT_PAGE_SIZE = 5;
+    public static final long CLEAR_CLICK_HISTORY_WAIT_SECONDS = 10*60;
 }

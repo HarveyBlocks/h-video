@@ -17,7 +17,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 @MapperScan(basePackages = "com.harvey.hvideo.dao")
 @SpringBootApplication
 @EnableAspectJAutoProxy(exposeProxy = true)
-@EnableScheduling
 public class HVideoApplication {
     public static void main(String[] args) {
         SpringApplication.run(HVideoApplication.class, args);

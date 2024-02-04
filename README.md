@@ -283,6 +283,48 @@ CREATE TABLE `tb_video_comment`
 1. 搜索
 2. docker部署
 
+```shell
+docker build -t h-video .
+docker run -d --name hv -p 8080:8080 --network hvideo h-video
+```
+
+```shell
+docker network inspect hvideo
+```
+简要如下:
+```json
+[
+    {
+        "Name": "hvideo",
+        "Id": "fdc8929e9f355aaa0460e156a9445ff2237b98e47d60956b80079d05596561fb",
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "021d121aa37849d695d257437ebf96d7814bd7eba52de29ae2ac5712dc577630": {
+                "Name": "redis"
+            },
+            "1505ef5ce4cec5cdee76244f082ee79cc145bef9714109c37513bab75e62d576": {
+                "Name": "mysql"
+            },
+            "897e12590884d31a7e3682034ed334617ab564e137c130e5eb8a75c78bafe9fb": {
+                "Name": "es"
+            },
+            "efbc576f839be06e8fe5987794ab7b5f3bb8406b391f80958145b5b9f9106e07": {
+                "Name": "kibana"
+            }
+        },
+        "Options": {},
+        "Labels": {}
+    }
+]
+
+```
+
 - EX用户INDEX
 
 # 用户创建

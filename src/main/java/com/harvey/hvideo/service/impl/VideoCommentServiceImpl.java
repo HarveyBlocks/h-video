@@ -10,7 +10,7 @@ import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.pojo.entity.VideoComment;
 import com.harvey.hvideo.service.UserService;
 import com.harvey.hvideo.service.VideoCommentService;
-import com.harvey.hvideo.util.Constants;
+import com.harvey.hvideo.Constants;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

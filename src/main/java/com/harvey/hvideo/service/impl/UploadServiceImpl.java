@@ -5,14 +5,19 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.harvey.hvideo.exception.BadRequestException;
 import com.harvey.hvideo.pojo.vo.FileWithUserId;
+import com.harvey.hvideo.properties.AuthProperties;
+import com.harvey.hvideo.properties.ConstantsProperties;
 import com.harvey.hvideo.service.UploadService;
+import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.RedissonLock;
 import com.harvey.hvideo.util.UserHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
@@ -67,16 +72,17 @@ public class UploadServiceImpl implements UploadService {
         // 生成新文件名
         String fileName = createNewFileName(constDir, originalFilename);
         // RE
-        file.transferTo(new File(constDir, fileName));
-        boolean added = ORDER_QUEUE.add(new FileWithUserId(file,new File(constDir, fileName),UserHolder.currentUserId()));
-        if (added){
-            // 返回结果
+        boolean added = ORDER_QUEUE.add(
+                new FileWithUserId(file, new File(constDir, fileName), UserHolder.currentUserId()));
+        if (added) {
             log.debug("文件上传成功，{}", fileName);
-        }else {
+        } else {
             log.error("文件上传失败，{}", fileName);
         }
+        // 返回结果
         return fileName;
     }
+
     @Override
     public String saveImageFile(final String constDir, MultipartFile file) throws IOException {
         // 获取原始文件名称
@@ -106,6 +112,7 @@ public class UploadServiceImpl implements UploadService {
                 this::saveVideoFileByQueue
         );
     }
+
     private static final BlockingQueue<FileWithUserId> ORDER_QUEUE = new ArrayBlockingQueue<>(1024 * 1024/*指定队列长度*/);
 
 
@@ -122,28 +129,35 @@ public class UploadServiceImpl implements UploadService {
             }
         }
     }
+
     private final RedissonLock<Exception> redissonLock;
 
     public UploadServiceImpl(RedissonLock<Exception> redissonLock) {
         this.redissonLock = redissonLock;
     }
-    private void handleVideoFile(FileWithUserId file) throws InterruptedException {
-        if (file == null) {
+
+    private void handleVideoFile(FileWithUserId fileWithUserId) throws InterruptedException {
+        if (fileWithUserId == null) {
             return;
         }
+        MultipartFile file = fileWithUserId.getFile();
+        long userId = fileWithUserId.getUserId();
+        File target = fileWithUserId.getTarget();
         Exception exception = redissonLock
-                .asynchronousLock("lock:voucher:order:" + file.getUserId(),
+                .asynchronousLock(RedisConstants.VIDEO_UPLOAD_LOCK + userId,
                         () -> {
                             try {
-                                file.getFile().transferTo(file.getTarget());
+                                file.transferTo(target);
                             } catch (Exception e) {
                                 return e;
                             }
                             return null;
                         }
                 );
-        if (exception!=null){
-            log.error("用户:`"+file.getUserId()+"`的视频`"+file.getTarget().getAbsolutePath()+"`保存失败",exception);
+        if (exception != null) {
+            log.error("用户:`" + fileWithUserId.getUserId() + "`的视频`" +
+                    fileWithUserId.getTarget().getAbsolutePath() +
+                    "`保存失败", exception);
         }
     }
 }

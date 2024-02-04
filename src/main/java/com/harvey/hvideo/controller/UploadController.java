@@ -2,11 +2,13 @@ package com.harvey.hvideo.controller;
 
 import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
+import com.harvey.hvideo.properties.ConstantsProperties;
 import com.harvey.hvideo.service.UploadService;
-import com.harvey.hvideo.util.Constants;
+import com.harvey.hvideo.Constants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,8 +26,10 @@ import java.io.IOException;
 @RestController
 @Api(tags = "上传或删除文件")
 @RequestMapping("upload")
+@EnableConfigurationProperties(ConstantsProperties.class)
 public class UploadController {
-
+    @Resource
+    private ConstantsProperties constantsProperties;
     @Resource
     private UploadService uploadService;
 
@@ -33,7 +37,7 @@ public class UploadController {
     @PostMapping("video")
     public Result<String> uploadVideo(@RequestParam("file") MultipartFile video) {
         try {
-            return new Result<>(uploadService.saveVideoFile(Constants.VIDEO_UPLOAD_DIR,video));
+            return new Result<>(uploadService.saveVideoFile(constantsProperties.getVideoUploadDir(),video));
         } catch (IOException e) {
             throw new RuntimeException("文件上传失败", e);
         }
@@ -42,7 +46,7 @@ public class UploadController {
     @ApiOperation("删除视频")
     @DeleteMapping("/video/{filename}")
     public Result<Null> deleteVideo(@PathVariable("filename") String filename) {
-        uploadService.deleteFile(Constants.VIDEO_UPLOAD_DIR, filename);
+        uploadService.deleteFile(constantsProperties.getVideoUploadDir(), filename);
         return Result.ok();
     }
 
@@ -54,7 +58,7 @@ public class UploadController {
     @PostMapping("/icon")
     public Result<String> uploadIcon(@RequestParam("file") MultipartFile image) {
         try {
-            return new Result<>(uploadService.saveImageFile(Constants.IMAGE_UPLOAD_DIR, image));
+            return new Result<>(uploadService.saveImageFile(constantsProperties.getImageUploadDir(), image));
         } catch (IOException e) {
             throw new RuntimeException("文件上传失败", e);
         }
@@ -63,7 +67,7 @@ public class UploadController {
     @ApiOperation("删除头像")
     @DeleteMapping("/icon/{filename}")
     public Result<Null> deleteIcon(@PathVariable("filename") String filename) {
-        uploadService.deleteFile(Constants.IMAGE_UPLOAD_DIR, filename);
+        uploadService.deleteFile(constantsProperties.getImageUploadDir(), filename);
         return Result.ok();
     }
 

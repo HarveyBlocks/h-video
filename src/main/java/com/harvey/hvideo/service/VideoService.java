@@ -19,7 +19,6 @@ public interface VideoService extends IService<Video> {
 
     Video viewVideo(Long videoId);
 
-    @Transactional
     void clickVideo(Long videoId);
 
     List<VideoDTO> queryHotVideo(Integer current);

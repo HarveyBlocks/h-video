@@ -14,6 +14,7 @@ import com.harvey.hvideo.pojo.dto.RegisterFormDTO;
 import com.harvey.hvideo.pojo.dto.UserDTO;
 import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.pojo.enums.Role;
+import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.properties.JwtProperties;
 import com.harvey.hvideo.service.UserService;
 import com.harvey.hvideo.util.*;
@@ -282,7 +283,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 "nickName", user.getNickName(),
                 "role", user.getRole().toString(),
                 "icon", user.getIcon(),
-                "time",Constants.RESTRICT_REQUEST_TIMES
+                "time", Constants.RESTRICT_REQUEST_TIMES
         );
     }
 

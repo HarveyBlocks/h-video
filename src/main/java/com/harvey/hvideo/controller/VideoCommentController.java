@@ -4,7 +4,6 @@ import com.harvey.hvideo.pojo.dto.VideoCommentDTO;
 import com.harvey.hvideo.pojo.entity.VideoComment;
 import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
-import com.harvey.hvideo.service.UserService;
 import com.harvey.hvideo.service.VideoCommentService;
 import com.harvey.hvideo.util.UserHolder;
 import io.swagger.annotations.Api;
@@ -53,7 +52,7 @@ public class VideoCommentController {
 
     @ApiOperation("查评论")
     @GetMapping("/of")
-    public Result<List<VideoCommentDTO>> querryComments(
+    public Result<List<VideoCommentDTO>> queryComments(
             @RequestParam(value = "current", defaultValue = "1")
             @ApiParam(value = "页码,[1,...),默认1", defaultValue = "1") Integer current,
             @RequestParam(value = "videoId")

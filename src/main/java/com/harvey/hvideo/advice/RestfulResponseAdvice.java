@@ -43,6 +43,6 @@ public class RestfulResponseAdvice implements ResponseBodyAdvice<Object> {
 //        System.out.println("-----------------beforeBodyWrite-----------------");
 //        System.out.println(body);
 //        if (response.setStatusCode());
-        return Result.ok(body,body.getClass());
+        return new Result<>(body);
     }
 }

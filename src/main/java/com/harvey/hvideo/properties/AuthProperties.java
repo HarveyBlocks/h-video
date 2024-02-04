@@ -18,5 +18,6 @@ import java.util.List;
 @ConfigurationProperties(prefix = "h-video.auth")
 public class AuthProperties {
     private List<String> includePaths;
+    private List<String> rootAuthPaths;
     private List<String> excludePaths;
 }

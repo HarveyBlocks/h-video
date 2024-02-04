@@ -1,10 +1,10 @@
-package com.harvey.hvedio;
+package com.harvey.hvideo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class HvedioApplicationTests {
+public class HVideoApplicationTests {
 
     @Test
     void contextLoads() {

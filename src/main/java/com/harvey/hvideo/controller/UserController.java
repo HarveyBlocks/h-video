@@ -1,5 +1,6 @@
 package com.harvey.hvideo.controller;
 
+import com.harvey.hvideo.exception.BadRequestException;
 import com.harvey.hvideo.exception.ResourceNotFountException;
 import com.harvey.hvideo.pojo.dto.LoginFormDTO;
 import com.harvey.hvideo.pojo.dto.RegisterFormDTO;
@@ -9,7 +10,7 @@ import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
 import com.harvey.hvideo.service.UploadService;
 import com.harvey.hvideo.service.UserService;
-import com.harvey.hvideo.util.Constants;
+import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.UserHolder;
 import io.swagger.annotations.Api;
@@ -52,7 +53,7 @@ public class UserController {
         // 发送短信验证码并保存验证码
         String code = userService.sendCode(phone);
         if (code == null) {
-            return Result.fail("手机号不合法");
+            throw new BadRequestException("手机号不合法");
         }
 
         //session.setAttribute(CODE_SESSION_KEY,code);
@@ -151,7 +152,7 @@ public class UserController {
             map.put("icon", "");
             stringRedisTemplate.opsForHash().putAll(key, map);
         }
-        return new Result(new UserDTO(1, 1L, "nickName", "icon"));
+        return new Result<>(new UserDTO(1, 1L, "nickName", "icon"));
     }
 
     @Resource

@@ -24,7 +24,7 @@ public class WebExceptionAdvice {
     @ExceptionHandler(RuntimeException.class)
     public Result<Null> handleRuntimeException(RuntimeException e) {
         log.error(e.toString(), e);
-        return Result.fail(500,"服务器异常,请稍后再试 ");
+        return new  Result<>(500,"服务器异常,请稍后再试 ");
     }
     @ExceptionHandler(BadRequestException.class)
     public Result<Null> handleBadRequestException(BadRequestException bre){

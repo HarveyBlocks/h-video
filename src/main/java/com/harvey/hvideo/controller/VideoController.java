@@ -8,8 +8,8 @@ import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
 import com.harvey.hvideo.pojo.vo.ScrollResult;
+import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.service.VideoService;
-import com.harvey.hvideo.util.Constants;
 import com.harvey.hvideo.util.UserHolder;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -60,7 +60,6 @@ public class VideoController {
 
     @GetMapping("/{id}")
     public Result<Video> viewVideo(@PathVariable("id")  Long id) {
-        videoService.clickVideo(id);
         return new Result<>(videoService.viewVideo(id));
     }
 

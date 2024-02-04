@@ -10,20 +10,22 @@ import com.harvey.hvideo.pojo.entity.Follow;
 import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.pojo.vo.ScrollResult;
+import com.harvey.hvideo.Constants;
+import com.harvey.hvideo.properties.AuthProperties;
+import com.harvey.hvideo.properties.ConstantsProperties;
 import com.harvey.hvideo.service.FollowService;
 import com.harvey.hvideo.service.UserService;
 import com.harvey.hvideo.service.VideoService;
-import com.harvey.hvideo.util.Constants;
 import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.UserHolder;
 import org.springframework.aop.framework.AopContext;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +46,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     public Video viewVideo(Long videoId) {
         // 查看video
         Video video = this.getById(videoId);
-        // 一部视频需要作者信息
-        addAuthor(video);
+        if (video != null) {
+            VideoService proxy = (VideoService) AopContext.currentProxy();
+            proxy.clickVideo(videoId);
+            // 一部视频需要作者信息
+            addAuthor(video);
+        }
         return video;
     }
 
@@ -67,6 +73,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             stringRedisTemplate.opsForSet().add(clickedSetKey, userId);
         }
     }
+
     private Boolean checkIsMember(String setKey, String userId) {
         return Boolean.TRUE.equals(
                 stringRedisTemplate.opsForSet().isMember(setKey, userId));
@@ -75,20 +82,27 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     /**
      * 每十分钟删除视频点击记录
      */
-    @Component
-    class ClickService {
-        @Scheduled(cron="0 0/10 * * * *")
-        public void delClickedHistory(){
-            Set<String> keys = stringRedisTemplate
-                    .keys(RedisConstants.VIDEO_CLICKED_KEY+"*");
-            if(keys==null||keys.isEmpty()){
+    @PostConstruct
+    public void delClickedHistory() {
+        while (true){
+            Set<String> keys = null;
+            try {
+                keys = stringRedisTemplate
+                        .keys(RedisConstants.VIDEO_CLICKED_KEY + "*");
+            } catch (NullPointerException e) {
+                log.debug("没有key可以清空:" + e.getMessage());
+            }
+            if (keys == null || keys.isEmpty()) {
                 return;
             }
             stringRedisTemplate.delete(keys);
             log.debug("完成一次清空观看记录");
+            try {
+                Thread.sleep(Constants.CLEAR_CLICK_HISTORY_WAIT_SECONDS*1000);
+            } catch (InterruptedException ignored) {
+            }
         }
     }
-
 
 
     @Override
@@ -107,6 +121,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
     @Override
     public List<VideoDTO> queryMyVideo(Integer current) {
         // 获取登录用户
@@ -135,7 +150,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         //select `user_id` from `tb_follow` where `follow_user_id` = 2;
         List<Follow> follows = followService.query()
                 .select("fan_id")
-                .eq("author_id",UserHolder.currentUserId().toString()).list();
+                .eq("author_id", UserHolder.currentUserId().toString()).list();
         for (Follow follow : follows) {
             stringRedisTemplate.opsForZSet().add(
                     FollowService.followedInboxKey(follow.getFanId()),
@@ -195,17 +210,19 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
     /**
      * TODO ES 依据tittle查询
+     *
      * @param current 当前页码
      */
     @Override
     public List<VideoDTO> queryVideoByTittle(Integer current, String tittle) {
         return null;
     }
+
     @Override
     public void saveSearchHistory(String tittle) {
         // 保存查询记录
-        String searchHistoryKey = RedisConstants.SEARCH_HISTORY+UserHolder.currentUserId();
-        stringRedisTemplate.opsForSet().add(searchHistoryKey,tittle);
+        String searchHistoryKey = RedisConstants.SEARCH_HISTORY + UserHolder.currentUserId();
+        stringRedisTemplate.opsForSet().add(searchHistoryKey, tittle);
     }
 
 
@@ -217,9 +234,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         videos.forEach(this::addAuthor);
         return videos;
     }
-
-
-
 
 
     private void addAuthor(Video video) {
