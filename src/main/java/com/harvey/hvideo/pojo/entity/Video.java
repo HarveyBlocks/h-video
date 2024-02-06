@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.harvey.hvideo.pojo.dto.VideoDoc;
+import com.harvey.hvideo.util.TimeUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -51,5 +54,18 @@ public class Video implements Serializable {
     private Integer comments;
 
     @ApiModelProperty("创建时间")
+    @JsonFormat(shape = JsonFormat.Shape.NUMBER)
     private LocalDateTime createTime;
+    public Video(){}
+    public Video(VideoDoc videoDoc){
+        this.id = videoDoc.getId();
+        this.userId = videoDoc.getUserId();
+        this.icon = videoDoc.getIcon();
+        this.nickName = videoDoc.getNickName();
+        this.title = videoDoc.getTitle();
+        this.videoPath = videoDoc.getVideoPath();
+        this.click = videoDoc.getClick();
+        this.comments = videoDoc.getComments();
+        this.createTime = TimeUtil.toTime(videoDoc.getCreateTime());
+    }
 }

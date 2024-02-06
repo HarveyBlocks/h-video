@@ -20,5 +20,7 @@ public class RegisterFormDTO {
     private String password;
     @ApiModelProperty("昵称")
     private String nickName;
+    @ApiModelProperty("头像")
+    private String icon;
 }
 

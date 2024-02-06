@@ -19,4 +19,6 @@ public class ConstantsProperties {
     private String clearClickHistoryWaitSeconds;
     private String maxPageSize;
     private String defaultPageSize;
+    private String redisHost;
+    private String esHost;
 }

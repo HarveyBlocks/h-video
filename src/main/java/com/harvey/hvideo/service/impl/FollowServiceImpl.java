@@ -4,6 +4,7 @@ package com.harvey.hvideo.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.dao.FollowMapper;
 import com.harvey.hvideo.pojo.dto.UserDTO;
 import com.harvey.hvideo.pojo.entity.Follow;
@@ -11,7 +12,6 @@ import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.service.FollowService;
 import com.harvey.hvideo.service.UserService;
 import com.harvey.hvideo.service.VideoService;
-import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.util.TimeUtil;
 import com.harvey.hvideo.util.UserHolder;
 import org.springframework.aop.framework.AopContext;
@@ -148,7 +148,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
         }
-        return userId2User(ids);
+        return userIds2User(ids);
     }
 
     @Override
@@ -168,7 +168,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                     }
                 }
         );
-        return userId2User(friendIds);
+        return userIds2User(friendIds);
     }
 
     @Override
@@ -177,7 +177,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
         }
-        return userId2User(ids);
+        return userIds2User(ids);
     }
 
     @Override
@@ -191,10 +191,10 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         // 获取当前页数据
         List<String> fanIds = records.stream()
                 .map(f -> f.getFanId().toString()).collect(Collectors.toList());
-        return userId2User(fanIds);
+        return userIds2User(fanIds);
     }
 
-    private List<UserDTO> userId2User(Collection<String> ids) {
+    private List<UserDTO> userIds2User(Collection<String> ids) {
         return userService.listByIds(ids).stream()
                 .map(UserDTO::new)
                 .collect(Collectors.toList());

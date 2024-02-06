@@ -14,4 +14,6 @@ import java.util.List;
  */
 public interface VideoCommentService extends IService<VideoComment> {
     List<VideoCommentDTO> queryComments(Integer current, Integer videoId, Integer parentId);
+
+    boolean saveComment(VideoComment videoComment);
 }

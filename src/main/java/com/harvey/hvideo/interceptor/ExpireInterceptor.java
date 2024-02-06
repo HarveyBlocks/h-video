@@ -1,8 +1,8 @@
 package com.harvey.hvideo.interceptor;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.harvey.hvideo.pojo.dto.UserDTO;
 import com.harvey.hvideo.Constants;
+import com.harvey.hvideo.pojo.dto.UserDTO;
 import com.harvey.hvideo.util.JwtTool;
 import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.UserHolder;

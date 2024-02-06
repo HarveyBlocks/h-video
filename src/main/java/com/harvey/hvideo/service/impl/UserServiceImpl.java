@@ -6,6 +6,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.dao.UserMapper;
 import com.harvey.hvideo.exception.BadRequestException;
 import com.harvey.hvideo.exception.UnauthorizedException;
@@ -14,7 +15,6 @@ import com.harvey.hvideo.pojo.dto.RegisterFormDTO;
 import com.harvey.hvideo.pojo.dto.UserDTO;
 import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.pojo.enums.Role;
-import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.properties.JwtProperties;
 import com.harvey.hvideo.service.UserService;
 import com.harvey.hvideo.util.*;
@@ -175,6 +175,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         registerUser.setPhone(registerForm.getPhone());
         registerUser.setPassword(passwordEncoder.encode(registerForm.getPassword()));
         registerUser.setNickName(registerForm.getNickName());
+        registerUser.setIcon(registerForm.getIcon());
         boolean saved = save(registerUser);
         if (!saved) {
             log.error("保存失败错误");

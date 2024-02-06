@@ -1,5 +1,6 @@
 package com.harvey.hvideo.controller;
 
+import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.exception.BadRequestException;
 import com.harvey.hvideo.exception.ResourceNotFountException;
 import com.harvey.hvideo.pojo.dto.LoginFormDTO;
@@ -10,7 +11,6 @@ import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
 import com.harvey.hvideo.service.UploadService;
 import com.harvey.hvideo.service.UserService;
-import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.UserHolder;
 import io.swagger.annotations.Api;

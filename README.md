@@ -221,6 +221,20 @@ CREATE TABLE `tb_follow`
 
 其实是以前的项目的,一起拷过来了
 
+### 好友
+
+```mysql
+use h_video;
+select fan_id
+from tb_follow
+where fan_id in (
+        select author_id
+        from tb_follow
+        where fan_id = '${id}'
+    )
+  and author_id = '${id}';
+```
+
 ### 视频
 
 #### 视频表
@@ -228,20 +242,23 @@ CREATE TABLE `tb_follow`
 ```mysql
 CREATE TABLE `tb_video`
 (
-    `id`          bigint unsigned                                                NOT NULL AUTO_INCREMENT COMMENT '主键',
-    `user_id`     bigint unsigned                                                NOT NULL COMMENT '用户id',
-    `title`       varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci  NOT NULL COMMENT '标题',
-    `video_path`  varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '视频地址',
-    `click`       int unsigned                                                            DEFAULT '0' COMMENT '点赞数量',
-    `comments`    int unsigned                                                            DEFAULT NULL COMMENT '评论数量',
-    `create_time` timestamp                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` timestamp                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (`id`) USING BTREE
+   `id`          bigint unsigned                                               NOT NULL AUTO_INCREMENT COMMENT '主键',
+   `user_id`     bigint unsigned                                               NOT NULL COMMENT '用户id',
+   `title`       varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '标题',
+   `video_path`  varchar(127) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '视频地址',
+   `click`       int unsigned                                                           DEFAULT '0' COMMENT '点赞数量',
+   `comments`    int unsigned                                                           DEFAULT NULL COMMENT '评论数量',
+   `create_time` timestamp                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+   `update_time` timestamp                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+   PRIMARY KEY (`id`) USING BTREE,
+   UNIQUE KEY `video_path` (`video_path`),
+   KEY `tb_video_click_desc_index` (`click` DESC) COMMENT ' 点击量降序索引',
+   KEY `tb_video_user_id_index` (`user_id`) COMMENT '依据用户(作者)id查询视频'
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 27
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci
-  ROW_FORMAT = COMPACT;
+  ROW_FORMAT = COMPACT
 ```
 
 本来业务需求上还有封面啊,简介啊这种东西,但是这种东西没啥逻辑, 只是添一个字段, 我就不加进去了
@@ -283,15 +300,30 @@ CREATE TABLE `tb_video_comment`
 1. 搜索
 2. docker部署
 
+-
+
+
+
 ```shell
 docker build -t h-video .
 docker run -d --name hv -p 8080:8080 --network hvideo h-video
+docker logs -f hv
 ```
+
+```shell
+docker stop hv
+docker rm hv
+docker rmi h-video
+rm -f hvideo-0.0.1-SNAPSHOT.jar 
+```
+
 
 ```shell
 docker network inspect hvideo
 ```
+
 简要如下:
+
 ```json
 [
     {
@@ -325,135 +357,95 @@ docker network inspect hvideo
 
 ```
 
-- EX用户INDEX
+## 2,6
 
-# 用户创建
+### INDEX
+PUT /h_video_video
+```json
+{
+   "mappings": {
+      "properties": {
+         "all":{
+            "type": "text",
+            "analyzer": "ik_max_word"
+         },
+         "id":{
+            "type": "keyword",
+            "index": true
+         },
+         "userId": {
+            "type": "keyword",
+            "index": true
+         },
+         "nickName": {
+            "type": "text",
+            "analyzer": "ik_smart",
+            "copy_to": "all"
+         },
+         "title": {
+            "type": "text",
+            "analyzer": "ik_max_word",
+            "copy_to": "all"
+         },
+         "click": {
+            "type": "integer",
+            "index": true
+         },
+         "comments": {
+            "type": "integer",
+            "index": true
+         },
+         "videoPath": {
+            "type": "text",
+            "index": false
+         },
+         "icon": {
+            "type": "text",
+            "index": false
+         },
+         "createTime":{
+            "type": "long",
+            "index": true
+         }
+      }
+   }
+}
+```
 
-PUT /user
+PUT /h_video_user
 
 ```json
 {
-  "mappings": {
-    "properties": {
-      "id": {
-        "type": "keyword",
-        "index": true
+  "mappings" : {
+    "properties" : {
+      "icon" : {
+        "type" : "text",
+        "index" : false
       },
-      "nickName": {
-        "type": "text",
-        "analyzer": "ik_smart",
-        "copy_to": "all"
+      "nickName" : {
+        "type" : "text",
+        "analyzer" : "ik_max_word"
       },
-      "phone": {
-        "type": "keyword",
-        "index": true
+      "id" : {
+        "type" : "keyword"
       },
-      "icon": {
-        "type": "text",
-        "index": false
+      "role" : {
+        "type" : "integer",
+        "index" : false
       }
     }
   }
 }
 ```
+video是Video,user是UserDTO
 
-```mysql
-CREATE TABLE `tb_user`
-(
-    `id`          bigint unsigned NOT NULL COMMENT '主键',
-    `userId`      bigint unsigned NOT NULL COMMENT '用户ID',
-    `kick`        bigint unsigned NOT NULL COMMENT '点击量',
-    `tittle`      varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '昵称，默认是用户id',
-    `video`       varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '人物头像',
-    `role`        int                                                           DEFAULT '1' COMMENT '用户权限',
-    `create_time` timestamp       NOT NULL                                      DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` timestamp       NOT NULL                                      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_general_ci
-  ROW_FORMAT = COMPACT COMMENT ='用户表'
-```
 
-# video创建
 
-PUT /video
 
-```json
-
-{
-  "settings": {
-    "analysis": {
-      "analyzer": {
-        "ik_py_analyzer": {
-          "tokenizer": "ik_max_word",
-          "filter": "my_pinyin"
-        }
-      },
-      "filter": {
-        "my_pinyin": {
-          "type": "pinyin",
-          "keep_full_pinyin": false,
-          "keep_joined_full_pinyin": true,
-          "keep_original": true,
-          "limit_first_letter_length": 16,
-          "remove_duplicated_term": true,
-          "none_chinese_pinyin_tokenize": false
-        }
-      }
-    }
-  },
-  "mappings": {
-    "properties": {
-      "id": {
-        "type": "keyword",
-        "index": true
-      },
-      "userId": {
-        "type": "keyword",
-        "index": true
-      },
-      "writerNickName": {
-        "type": "text",
-        "analyzer": "ik_smart",
-        "copy_to": "all"
-      },
-      "title": {
-        "type": "text",
-        "analyzer": "ik_max_word",
-        "copy_to": "all"
-      },
-      "kick": {
-        "type": "Integer",
-        "index": true
-      },
-      "video": {
-        "type": "text",
-        "index": false
-      }
-    }
-  }
-}
-```
-
-关注表(中间表)
-
-视频表-视频id(雪花),用户ID,title,video(path),点击量,创建时间,放弃做更新接口
-
-点击量怎么实现?访问,queryByUser
-
-点击量+时间, sortedSet,检查存在,然后10min时间一到删除Set内的userId(SpringTask)
-
-直接删除值在10到15之间的member:
-
-```redis
-zRemRangeByScore shop:geo:1 10 50
-```
+### 查询数据
 
 视频默认排序
 score*ln(kick)
-
-# 查询数据
 
 GET /video/_search
 
@@ -491,13 +483,22 @@ GET /video/_search
 ```
 
 - 依据点击量查
-- 提示pinyin
-- 评论视频 （请注意，评论是可以有回复的) 再说
-- 高亮就不做了
-- 分页再说(当前第几页传参,一页多少写道常量里)
-- 保留所有的历史搜索记录（Redis）啊?消耗服务器内存啊key:用户=List...
+- 分页(当前第几页传参,一页多少写道常量里)
 
-## 任务
+
+## 其他
+
+关注表(中间表)
+
+视频表-视频id(雪花),用户ID,title,video(path),点击量,创建时间,放弃做更新接口
+
+点击量怎么实现?访问,queryByUser
+
+点击量+时间, sortedSet,检查存在,然后10min时间一到删除Set内的userId(SpringTask)
+(不行,会有分布式事物导致的异常)
+
+
+### 任务
 
 项目要求
 

@@ -1,9 +1,6 @@
 package com.harvey.hvideo.pojo.dto;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.harvey.hvideo.pojo.entity.User;
-import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.pojo.entity.VideoComment;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

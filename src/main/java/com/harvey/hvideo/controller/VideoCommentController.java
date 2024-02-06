@@ -28,21 +28,22 @@ public class VideoCommentController {
     @Resource
     private VideoCommentService videoCommentService;
 
+
     @ApiOperation("写评论")
     @PostMapping
-    public Result<Null> saveVideo(@RequestBody VideoComment videoComment) {
+    public Result<Null> saveComment(@RequestBody VideoComment videoComment) {
         // 获取登录用户
         Long userId = UserHolder.currentUserId();
         videoComment.setUserId(userId);
         //
         boolean saved;
         try {
-            saved = videoCommentService.save(videoComment);
+            saved = videoCommentService.saveComment(videoComment);
         } catch (Exception e) {
-            throw new RuntimeException("未能成功保存视频");
+            throw new RuntimeException("未能成功保存评论");
         }
         if (!saved) {
-            throw new RuntimeException("未能成功保存视频");
+            throw new RuntimeException("未能成功保存评论");
         }
         // 返回id
         return Result.ok();

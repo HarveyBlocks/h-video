@@ -1,7 +1,7 @@
 package com.harvey.hvideo.interceptor;
 
-import com.harvey.hvideo.pojo.enums.Role;
 import com.harvey.hvideo.Constants;
+import com.harvey.hvideo.pojo.enums.Role;
 import com.harvey.hvideo.util.UserHolder;
 import org.springframework.web.servlet.HandlerInterceptor;
 

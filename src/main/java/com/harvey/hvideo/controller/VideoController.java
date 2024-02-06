@@ -2,13 +2,13 @@ package com.harvey.hvideo.controller;
 
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.pojo.dto.UserDTO;
 import com.harvey.hvideo.pojo.dto.VideoDTO;
 import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
 import com.harvey.hvideo.pojo.vo.ScrollResult;
-import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.service.VideoService;
 import com.harvey.hvideo.util.UserHolder;
 import io.swagger.annotations.Api;
@@ -44,7 +44,7 @@ public class VideoController {
         video.setUserId(user.getId());
         // 保存视频
         try {
-            boolean saved = videoService.save(video);
+            boolean saved = videoService.saveVideo(video);
             if (saved) {
                 // 发送Video
                 videoService.sendVideoToFans(video.getId());
@@ -108,7 +108,7 @@ public class VideoController {
      * @param current 当前页码
      * @return 热门视频集合
      */
-    @ApiOperation("查询热门视频(关于点击量)")
+    @ApiOperation("依据标题查视频")
     @GetMapping("/search")
     public Result<List<VideoDTO>> queryVideoByTittle(
             @RequestParam(value = "current", defaultValue = "1")

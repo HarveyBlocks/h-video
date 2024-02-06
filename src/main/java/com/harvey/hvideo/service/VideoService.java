@@ -6,7 +6,6 @@ import com.harvey.hvideo.pojo.dto.VideoDTO;
 import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.pojo.vo.ScrollResult;
 import com.harvey.hvideo.util.RedisConstants;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -36,5 +35,9 @@ public interface VideoService extends IService<Video> {
 
     List<VideoDTO> queryVideoByTittle(Integer current, String tittle);
 
+    boolean save2Es(Video video, String videoId);
+
     void saveSearchHistory(String tittle);
+
+    boolean saveVideo(Video video);
 }
