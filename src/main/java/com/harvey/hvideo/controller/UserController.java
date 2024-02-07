@@ -9,6 +9,7 @@ import com.harvey.hvideo.pojo.dto.UserDTO;
 import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
+import com.harvey.hvideo.properties.ConstantsProperties;
 import com.harvey.hvideo.service.UploadService;
 import com.harvey.hvideo.service.UserService;
 import com.harvey.hvideo.util.RedisConstants;
@@ -17,6 +18,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @Api(tags = "用户登录校验")
 @RequestMapping("/user")
+@EnableConfigurationProperties(ConstantsProperties.class)
 public class UserController {
     @Resource
     private UserService userService;
@@ -157,7 +160,8 @@ public class UserController {
 
     @Resource
     private UploadService uploadService;
-
+    @Resource
+    private ConstantsProperties constantsProperties;
 
     @ApiOperation(value = "更新用户信息", notes = "没有更新的部分就传null或空字符串,不用传ID")
     @PutMapping("/update")
@@ -166,7 +170,7 @@ public class UserController {
                                @ApiParam(hidden = true) HttpServletRequest request) {
         // 删除原有头像
         if (userDTO.getIcon() != null && !userDTO.getIcon().isEmpty()) {
-            uploadService.deleteFile(Constants.IMAGE_UPLOAD_DIR, UserHolder.getUser().getIcon());
+            uploadService.deleteFile(constantsProperties.getImageUploadDir(), UserHolder.getUser().getIcon());
         }
         userService.updateUser(userDTO, request.getHeader(Constants.AUTHORIZATION_HEADER));
         return Result.ok();

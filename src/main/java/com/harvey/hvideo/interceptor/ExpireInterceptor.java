@@ -40,14 +40,14 @@ public class ExpireInterceptor implements HandlerInterceptor {
         // 进入controller之前进行登录校验
 
 //        System.err.println("1");
-
+        String id;
         // 获取请求头中的token
         String token = request.getHeader(Constants.AUTHORIZATION_HEADER);//依据前端的信息
         if (token == null || token.isEmpty()) {
-            return true;
+            id = request.getRemoteAddr();
+        }else {
+            id = jwtTool.parseToken(token).toString();
         }
-
-        Long id = jwtTool.parseToken(token);
 //        System.err.println("2");
 
         // 获取user数据
@@ -55,7 +55,9 @@ public class ExpireInterceptor implements HandlerInterceptor {
         Map<Object, Object> userFieldMap = stringRedisTemplate.opsForHash().entries(tokenKey);
         if (userFieldMap.isEmpty()) {
             // entries不会返回null
-            return true;
+            // 用户不存在,就是游客,也给他限个流
+            stringRedisTemplate.opsForHash().put(tokenKey,"time","20");
+            userFieldMap.put("time","20");
         }
 
 //        System.err.println("3");
@@ -72,6 +74,10 @@ public class ExpireInterceptor implements HandlerInterceptor {
             stringRedisTemplate.opsForHash().increment(tokenKey, "time", -1);
         }
         userFieldMap.remove("time");
+        if (userFieldMap.isEmpty()){
+            // 现在是游客的可以走了
+            return true;
+        }
         // 第三个参数: 是否忽略转换过程中产生的异常
         UserDTO user = BeanUtil.fillBeanWithMap(userFieldMap, new UserDTO(), false);
 
@@ -89,14 +95,16 @@ public class ExpireInterceptor implements HandlerInterceptor {
                                 HttpServletResponse response,
                                 Object handler, Exception ex)
             throws Exception {
-
+        String id;
         try {
-            String tokenKey = RedisConstants.LOGIN_USER_KEY + UserHolder.currentUserId();
-            stringRedisTemplate.opsForHash().increment(tokenKey, "time", 1);
-
-            // 完成Controller之后移除UserHolder, 以防下一次用这条线程的请求获取到不属于它的用户信息
-            UserHolder.removeUser();
-        } catch (Exception ignored) {
+            id = UserHolder.currentUserId().toString();
+        } catch (Exception e) {
+            id = request.getRemoteAddr();
         }
+        String tokenKey = RedisConstants.LOGIN_USER_KEY + id;
+        stringRedisTemplate.opsForHash().increment(tokenKey, "time", 1);
+
+        // 完成Controller之后移除UserHolder, 以防下一次用这条线程的请求获取到不属于它的用户信息
+        UserHolder.removeUser();
     }
 }

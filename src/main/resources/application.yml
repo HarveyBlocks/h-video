@@ -4,14 +4,23 @@ spring:
   application:
     name: h-video
   datasource:
-    url: jdbc:mysql://${h-video.db.host}:3306/h_video?useSSL=false&serverTimezone=UTC
-    username: root
-    password: *****
-    driver-class-name: com.mysql.cj.jdbc.Driver
+#    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      url: jdbc:mysql://${h-video.db.host}:3306/h_video?useSSL=false&serverTimezone=UTC
+      username: root
+      password: 123
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      initialSize: 5
+      minIdle: 5
+      maxActive: 20
+      maxWait: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+
   redis:
     host: ${h-video.redis.host}
     port: 6379
-    password: *****
+    password: 123456
     lettuce:
       pool:
         max-active: 10
@@ -50,8 +59,8 @@ h-video:
   jwt:
     location: classpath:hmall.jks
     alias: hmall
-    password: ***** # 解析文件的密钥(文件本身也是密钥)
-    tokenTTL: 2400h
+    password: hmall123 # 解析文件的密钥(文件本身也是密钥)
+    tokenTTL: 30m
   auth:
     include-paths:
       - "/user/logout"

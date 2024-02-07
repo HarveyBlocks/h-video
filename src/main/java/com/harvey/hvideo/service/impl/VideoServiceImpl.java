@@ -25,8 +25,14 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -40,10 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -214,8 +217,21 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
         SearchSourceBuilder s = new SearchSourceBuilder();
         // 2. 组织DSL语句
-        s.query(QueryBuilders.termQuery("all", tittle));
-        s.sort("_score", SortOrder.DESC);
+        MatchQueryBuilder matchQuery = new MatchQueryBuilder("all",tittle);
+/*
+        // 过滤和权重
+
+        FunctionScoreQueryBuilder functionQuery = new FunctionScoreQueryBuilder(matchQuery,
+                ScoreFunctionBuilders.scriptFunction(
+                        new Script(ScriptType.INLINE, "painless", "Math.log(1 + doc['kick'].value)", Map.of())
+                )
+        );
+
+        functionQuery.boostMode(CombineFunction.MULTIPLY);
+*/
+
+        s.query(matchQuery);
+        s.sort("click", SortOrder.DESC);
         s.from((current - 1) * Constants.MAX_PAGE_SIZE);
         s.size(Constants.MAX_PAGE_SIZE);
         request.source(s);
