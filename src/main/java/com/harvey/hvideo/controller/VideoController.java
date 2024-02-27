@@ -103,7 +103,7 @@ public class VideoController {
         return new Result<>(videoService.queryHotVideo(current));
     }
     /**
-     * TODO ES, 依据tittle排序
+     * ES, 依据tittle排序
      *
      * @param current 当前页码
      * @return 热门视频集合

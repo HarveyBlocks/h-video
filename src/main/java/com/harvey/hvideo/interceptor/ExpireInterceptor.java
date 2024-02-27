@@ -56,7 +56,7 @@ public class ExpireInterceptor implements HandlerInterceptor {
         if (userFieldMap.isEmpty()) {
             // entries不会返回null
             // 用户不存在,就是游客,也给他限个流
-            stringRedisTemplate.opsForHash().put(tokenKey,"time","20");
+            stringRedisTemplate.opsForHash().put(tokenKey,"time",Constants.RESTRICT_REQUEST_TIMES);
             userFieldMap.put("time","20");
         }
 

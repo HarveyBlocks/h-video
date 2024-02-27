@@ -25,14 +25,8 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.MatchQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
-import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -46,7 +40,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -113,7 +110,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             stringRedisTemplate.delete(keys);
             log.debug("完成一次清空观看记录");
             try {
-                // 无奈之举
+                // 无奈之举......Netty也能做定时任务.....
                 Thread.sleep(Constants.CLEAR_CLICK_HISTORY_WAIT_SECONDS * 1000);
             } catch (InterruptedException ignored) {
             }
@@ -124,7 +121,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public List<VideoDTO> queryHotVideo(Integer current) {
         // 根据用户查询
-        Page<Video> page = this.query().orderByDesc("click").page(new Page<>(current, Constants.MAX_PAGE_SIZE));
+        Page<Video> page = this.query()
+                .orderByDesc("click")
+                .page(new Page<>(current, Constants.MAX_PAGE_SIZE));
         // 获取当前页数据
         List<Video> records = page.getRecords();
         // 查询用户
@@ -201,7 +200,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         List<Video> videos = queryCompleteVideos(videoIds);
         log.debug("newOffset=" + newOffset);
         log.debug("minTime=" + minTime);
-        return new ScrollResult<>(videos.stream().map(VideoDTO::new).collect(Collectors.toList()), minTime, newOffset);
+        return new ScrollResult<>(videos.stream().map(VideoDTO::new)
+                .collect(Collectors.toList()), minTime, newOffset);
     }
 
 
@@ -218,18 +218,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         SearchSourceBuilder s = new SearchSourceBuilder();
         // 2. 组织DSL语句
         MatchQueryBuilder matchQuery = new MatchQueryBuilder("all",tittle);
-/*
-        // 过滤和权重
-
-        FunctionScoreQueryBuilder functionQuery = new FunctionScoreQueryBuilder(matchQuery,
-                ScoreFunctionBuilders.scriptFunction(
-                        new Script(ScriptType.INLINE, "painless", "Math.log(1 + doc['kick'].value)", Map.of())
-                )
-        );
-
-        functionQuery.boostMode(CombineFunction.MULTIPLY);
-*/
-
         s.query(matchQuery);
         s.sort("click", SortOrder.DESC);
         s.from((current - 1) * Constants.MAX_PAGE_SIZE);

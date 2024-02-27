@@ -111,7 +111,6 @@ public class UserController {
     public Result<Null> logout(HttpServletResponse response) {
         String tokenKey = RedisConstants.LOGIN_USER_KEY + UserHolder.currentUserId();
         stringRedisTemplate.delete(tokenKey);
-        UserHolder.removeUser();// Interceptor会做,多此一举
         response.setStatus(401);
         return Result.ok();
     }

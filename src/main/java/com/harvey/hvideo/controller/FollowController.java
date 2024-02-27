@@ -30,7 +30,7 @@ public class FollowController {
     /**
      * 查询是否有关注
      *
-     * @return boolean 关注了true,否者false
+     * @return boolean 关注了true,否则false
      */
     @ApiOperation("是否关注")
     @GetMapping("or/not/{id}")
@@ -66,9 +66,7 @@ public class FollowController {
         return new Result<>(followService.followList(UserHolder.getUser().getId()));
     }
 
-    /**
-     * TODO
-     */
+
     @GetMapping("fan/")
     @ApiOperation("分页查询粉丝列表")
     public Result<List<UserDTO>> queryFanList(

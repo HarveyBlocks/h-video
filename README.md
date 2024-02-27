@@ -527,6 +527,11 @@ GET /video/_search
 - 保留所有的历史搜索记录（Redis）啊?消耗服务器内存啊key:用户=List...
 - 排序视频（点击量，发布时间）查询 ES
 
+**没有完成数据同步!**由于Mysql的容器启动的比较早, 没有做数据卷挂载, 导致没法用Canal.
+重新搞容器的话, 数据要重新导一遍, 很烦(说不定一个不小心就炸了, 我也不敢动它)
+当然, 我也不想做侵入式的编程
+以后做的话肯定先把数据卷挂载啦♥♥♥
+
 ##### 注意：
 
 性能优化, 并发控制有实现
@@ -578,12 +583,12 @@ pre里减数据,到0锁住; post里加,加到20
 **如果你想挑战更多，可以考虑以下Bonus任务：**
 
 1. 使用对象存储服务（如阿里云、腾讯云、七牛云）来存储大文件。
-   
+
    - 不会啊,真不会啊
 
 2. 实现大视频的分片处理。
 
-    - 分片上传? 那不就是用MultiPartFile嘛
+   - 分片上传? 那不就是用MultiPartFile嘛
 
 
 ![MultipartFile的特点.png](imgs/img1.png)
@@ -603,6 +608,29 @@ pre里减数据,到0锁住; post里加,加到20
 
 1. 添加管理员功能，以管理网站内容。（安全框架实现鉴权）
 
-    - 这个网站没啥好管理的qwq
+   - 这个网站没啥好管理的qwq
 
 2. 使用**Elasticsearch**实现高效的搜索功能。
+
+
+## 做了优化的方法
+
+com.harvey.hvideo.service.impl.UserServiceImpl.queryUserByIdWithRedisson
+
+用了Redisson做分布式锁 ,应对击穿
+
+com.harvey.hvideo.service.impl.UserServiceImpl.getFromDbAndWriteToCache
+
+用了假数据应对穿透
+
+com.harvey.hvideo.service.impl.UploadServiceImpl.asynchronousSaveVideoFile
+
+用异步保存了文件(保存到本地)
+
+com.harvey.hvideo.service.impl.VideoServiceImpl.queryVideoByTittle
+
+用ES依据标题查询视频信息, 一开始表没设计好, 应该多使用(video+video_info分开来这种的)
+
+com.harvey.hvideo.service.impl.VideoServiceImpl.queryFollowVideos
+
+使用滚动分页查询, 用拉模式实现的Timeline
