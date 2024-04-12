@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
- * TODO
  *
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0
@@ -201,7 +200,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
         String resultJson = JSON.toJSONString(result);
         SINGLE.execute(() -> {
             // 存到MySQL
-            int contentId = chatService.insert(new Message(from, content));
+            int contentId = chatService.insert(new Message(from, content,null, groupId));
             // 存到Redis, key是群聊ID,  value是contentID, score是当前时间
             String key = SessionRecordService.GROUP_CONTENT_KEY + groupId;
             stringRedisTemplate.opsForZSet().add(key, String.valueOf(contentId), System.currentTimeMillis());

@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * TODO
  *
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0
@@ -139,7 +138,7 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
 
             // 存到MySQL
             ChatService thisService = (ChatService) AopContext.currentProxy();
-            int contentId = thisService.insert(new Message(userId, content));
+            int contentId = thisService.insert(new Message(userId, content,sessionRecordId,null));
             // 内容
             String key = SessionRecordService.PERSON_CONTENT_KEY + sessionRecordId;
             stringRedisTemplate.opsForZSet().add(key, String.valueOf(contentId), System.currentTimeMillis());

@@ -5,8 +5,6 @@ import com.harvey.hvideo.pojo.entity.Group;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * TODO
- *
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0
  * @date 2024-04-12 14:56

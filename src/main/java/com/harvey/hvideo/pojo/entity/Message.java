@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 /**
- * TODO
+ * 消息文本信息
  *
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0
@@ -25,9 +25,13 @@ public class Message {
     private Long id;
     private Long fromId;
     private String content;
+    private Long sessionId;
+    private Long groupId;
 
-    public Message(Long fromId, String content) {
+    public Message(Long fromId, String content,Long sessionId,Long groupId) {
         this.fromId = fromId;
         this.content = content;
+        this.sessionId = sessionId;
+        this.groupId = groupId;
     }
 }

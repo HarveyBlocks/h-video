@@ -216,7 +216,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 更新
 
         // TODO 删除Redis数据
-        saveToRedis(new UserDto(user), token);
+        String tokenKey = RedisConstants.LOGIN_USER_KEY + jwtTool.parseToken(token);
+        stringRedisTemplate.delete(tokenKey);
         // 更新数据库
         UserService userService = (UserService) AopContext.currentProxy();
         boolean update = userService.updateById(user);

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 /**
- * TODO
+ * 会话信息
  *
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0

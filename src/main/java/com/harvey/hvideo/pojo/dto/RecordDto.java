@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 
 /**
- * TODO
+ * 简化的会话信息
  *
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0

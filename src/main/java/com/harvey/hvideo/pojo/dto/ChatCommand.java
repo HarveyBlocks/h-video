@@ -5,7 +5,6 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * TODO
  *
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0
