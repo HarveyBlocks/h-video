@@ -42,7 +42,4 @@ public class VideoCommentDto implements Serializable {
             this.parentNickName = parentUserName;
         }
     }
-    public VideoCommentDto(VideoComment videoComment, User user){
-        this(videoComment,user,null);
-    }
 }

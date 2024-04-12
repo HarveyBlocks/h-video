@@ -94,7 +94,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
      */
     @PostConstruct
     public void delClickedHistory() {
-        while (true) {
+        Timer timer = new Timer();
+        timer.schedule(new ClickedHistory(),10*60*1000L);
+    }
+    class ClickedHistory extends TimerTask{
+        @Override
+        public void run() {
             Set<String> keys = null;
             try {
                 keys = stringRedisTemplate.keys(RedisConstants.VIDEO_CLICKED_KEY + "*");
@@ -106,11 +111,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
             }
             stringRedisTemplate.delete(keys);
             log.debug("完成一次清空观看记录");
-            try {
-                // 无奈之举......Netty也能做定时任务.....
-                Thread.sleep(Constants.CLEAR_CLICK_HISTORY_WAIT_SECONDS * 1000);
-            } catch (InterruptedException ignored) {
-            }
         }
     }
 

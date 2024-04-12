@@ -62,7 +62,7 @@ public class UploadServiceImpl implements UploadService {
     }
 
     @Override
-    public String saveVideoFile(final String constDir, MultipartFile file) throws IOException {
+    public String saveVideoFile(final String constDir, MultipartFile file) {
         // 获取原始文件名称
         String originalFilename = file.getOriginalFilename();
         // 生成新文件名

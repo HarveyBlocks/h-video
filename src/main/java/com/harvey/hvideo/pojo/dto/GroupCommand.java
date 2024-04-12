@@ -19,7 +19,7 @@ public class GroupCommand implements Serializable {
     private String content; // 创建群聊就是群聊名称, 然后系统分配一个雪花ID
     private byte[] image;
     public enum StandardCommand{
-        QUIT,JOIN,CREATE,CHAT;
+        QUIT,JOIN,CREATE,CHAT
     }
 
 }

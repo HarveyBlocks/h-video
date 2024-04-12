@@ -34,8 +34,7 @@ public class ExpireInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response,
-                             Object handler)
-            throws Exception {
+                             Object handler) {
 
         // 进入controller之前进行登录校验
 
@@ -93,8 +92,7 @@ public class ExpireInterceptor implements HandlerInterceptor {
     @Override
     public void afterCompletion(HttpServletRequest request,
                                 HttpServletResponse response,
-                                Object handler, Exception ex)
-            throws Exception {
+                                Object handler, Exception ex) {
         String id;
         try {
             id = UserHolder.currentUserId().toString();

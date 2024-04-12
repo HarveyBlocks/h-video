@@ -1,13 +1,5 @@
 package com.harvey.hvideo.controller;
 
-/**
- * TODO
- *
- * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
- * @version 1.0
- * @date 2024-04-11 21:39
- */
-
 import com.harvey.hvideo.pojo.dto.ChatCommand;
 import com.harvey.hvideo.pojo.dto.GroupCommand;
 import com.harvey.hvideo.service.ChatService;

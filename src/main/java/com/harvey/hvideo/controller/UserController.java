@@ -40,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/user")
 @EnableConfigurationProperties(ConstantsProperties.class)
 public class UserController {
-    public static final String USERNAME_SESSION_KEY = "user";
     @Resource
     private UserService userService;
 
