@@ -10,9 +10,9 @@ import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.dao.UserMapper;
 import com.harvey.hvideo.exception.BadRequestException;
 import com.harvey.hvideo.exception.UnauthorizedException;
-import com.harvey.hvideo.pojo.dto.LoginFormDTO;
-import com.harvey.hvideo.pojo.dto.RegisterFormDTO;
-import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.LoginFormDto;
+import com.harvey.hvideo.pojo.dto.RegisterFormDto;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.pojo.enums.Role;
 import com.harvey.hvideo.properties.JwtProperties;
@@ -116,7 +116,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public String chooseLoginWay(LoginFormDTO loginForm) {
+    public String chooseLoginWay(LoginFormDto loginForm) {
         User user /* = null*/;
         String phone = loginForm.getPhone();
         String code = loginForm.getCode();
@@ -157,20 +157,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
 
-        // session.setAttribute(Constants.USER_SESSION_KEY,new UserDTO(user.getId(),user.getNickName(),user.getIcon()));
+        // session.setAttribute(Constants.USER_SESSION_KEY,new UserDto(user.getId(),user.getNickName(),user.getIcon()));
         // 将用户DTO存入Redis
         String token =// 生成随机Token,hutool工具包
                 jwtTool.createToken(user.getId(), jwtProperties.getTokenTTL());//true表示不带中划线;
 
 
-        saveToRedis(new UserDTO(user), token);
+        saveToRedis(new UserDto(user), token);
         // 返回token
         return token;
     }
 
     @Override
     @Transactional
-    public String register(RegisterFormDTO registerForm) {
+    public String register(RegisterFormDto registerForm) {
         User registerUser = new User();
         registerUser.setPhone(registerForm.getPhone());
         registerUser.setPassword(passwordEncoder.encode(registerForm.getPassword()));
@@ -191,13 +191,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 将用户DTO存入Redis
         String token = jwtTool.createToken(user.getId(), jwtProperties.getTokenTTL());
-        saveToRedis(new UserDTO(user), token);
+        saveToRedis(new UserDto(user), token);
         return token;
     }
 
     @Override
     @Transactional
-    public void updateUser(UserDTO userDTO, String token) {
+    public void updateUser(UserDto userDTO, String token) {
         // 更新实体数据
         User user = this.getById(UserHolder.currentUserId());
         String nickName = userDTO.getNickName();
@@ -215,8 +215,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setUpdateTime(LocalDateTime.now());
         // 更新
 
-        // 更新Redis数据
-        saveToRedis(new UserDTO(user), token);
+        // TODO 删除Redis数据
+        saveToRedis(new UserDto(user), token);
         // 更新数据库
         UserService userService = (UserService) AopContext.currentProxy();
         boolean update = userService.updateById(user);
@@ -226,7 +226,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
 
-    private void saveToRedis(UserDTO userDTO, String token) {
+    private void saveToRedis(UserDto userDTO, String token) {
         if (userDTO == null) {
             throw new BadRequestException("用户信息为null");
         }
@@ -242,14 +242,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
 
-    private final RedissonLock<UserDTO> redissonLock;
+    private final RedissonLock<UserDto> redissonLock;
 
-    public UserServiceImpl(RedissonLock<UserDTO>  redissonLock) {
+    public UserServiceImpl(RedissonLock<UserDto>  redissonLock) {
         this.redissonLock = redissonLock;
     }
 
     @Override
-    public UserDTO queryUserByIdWithRedisson(Long userId) throws InterruptedException {
+    public UserDto queryUserByIdWithRedisson(Long userId) throws InterruptedException {
         log.debug("queryMutexFixByLock");
         String key = RedisConstants.LOGIN_USER_KEY + userId;
         // 从缓存查
@@ -268,7 +268,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 第三个参数: 是否忽略转换过程中产生的异常
         userFieldMap.remove("time");
         try {
-            return BeanUtil.fillBeanWithMap(userFieldMap, new UserDTO(), false);
+            return BeanUtil.fillBeanWithMap(userFieldMap, new UserDto(), false);
         } catch (Exception e) {
             log.error("在转化UserFieldMap时出现错误错误" + userFieldMap);
             throw new RuntimeException(e);
@@ -278,7 +278,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
 
 
-    private static Map<String, String> user2Map(UserDTO user) {
+    private static Map<String, String> user2Map(UserDto user) {
         return Map.of(
                 "id", user.getId().toString(),
                 "nickName", user.getNickName(),
@@ -296,18 +296,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param key key
      * @return shop
      */
-    private UserDTO getFromDbAndWriteToCache(Long id, String key) {
+    private UserDto getFromDbAndWriteToCache(Long id, String key) {
         // 缓存不存在
         // 使用缓存空对象的逻辑
         log.debug("getFromDbAndWriteToCache");
-        UserDTO userDTO = null;
+        UserDto userDTO = null;
         Long ttl = RedisConstants.CACHE_NULL_TTL;
         Map<String, String> userFieldMap = Map.of("id", "");
         // 数据库查
         log.debug("从数据库查用户:" + id);
         User user = this.getById(id);
         if (user != null) {
-            userDTO = new UserDTO(user);
+            userDTO = new UserDto(user);
             // 存在,写入Cache,更改TTL
             log.debug("数据库中存在用户:" + id);
             userFieldMap = user2Map(userDTO);
@@ -352,7 +352,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     @Deprecated
-    public UserDTO queryUserById(Long userId) {
+    public UserDto queryUserById(Long userId) {
         log.debug("queryMutexFixByLock");
         String key = RedisConstants.LOGIN_USER_KEY + userId;
         while (true) {
@@ -366,7 +366,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 try {
                     if (lock(lockKey)) {// 每个店铺要有自己的锁
                         log.debug("进入锁");
-                        UserDTO userDTO = getFromDbAndWriteToCache(userId, key);
+                        UserDto userDTO = getFromDbAndWriteToCache(userId, key);
                         log.debug("完成从数据库读取用户:" + userId + "并写入缓存");
                         // 完成读取要释放锁
                         unlock(lockKey);
@@ -393,7 +393,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 第三个参数: 是否忽略转换过程中产生的异常
             userFieldMap.remove("time");
             try {
-                return BeanUtil.fillBeanWithMap(userFieldMap, new UserDTO(), false);
+                return BeanUtil.fillBeanWithMap(userFieldMap, new UserDto(), false);
             } catch (Exception e) {
                 log.error("在转化UserFieldMap时出现错误错误" + userFieldMap);
                 throw new RuntimeException(e);

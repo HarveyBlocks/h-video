@@ -1,7 +1,7 @@
 package com.harvey.hvideo.controller;
 
 
-import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
 import com.harvey.hvideo.service.FollowService;
@@ -56,20 +56,20 @@ public class FollowController {
 
     @GetMapping("common/{id}")
     @ApiOperation("查询共同关注列表")
-    public Result<List<UserDTO>> follow(@PathVariable("id") Long authorId) {
+    public Result<List<UserDto>> follow(@PathVariable("id") Long authorId) {
         return new Result<>(followService.followInteraction(authorId, UserHolder.getUser().getId()));
     }
 
     @GetMapping("author/me")
     @ApiOperation("查询当前用户关注列表")
-    public Result<List<UserDTO>> queryFollowList() {
+    public Result<List<UserDto>> queryFollowList() {
         return new Result<>(followService.followList(UserHolder.getUser().getId()));
     }
 
 
     @GetMapping("fan/")
     @ApiOperation("分页查询粉丝列表")
-    public Result<List<UserDTO>> queryFanList(
+    public Result<List<UserDto>> queryFanList(
             @RequestParam("authorId") Long authorId,
             @RequestParam(value = "current", defaultValue = "1")
             @ApiParam("页码,[1,...),默认1") Integer current) {
@@ -79,7 +79,7 @@ public class FollowController {
 
     @GetMapping("friend/me")
     @ApiOperation("查询当前用户的好友列表")
-    public Result<List<UserDTO>> queryFriendList() {
+    public Result<List<UserDto>> queryFriendList() {
         return new Result<>(followService.friendList(UserHolder.getUser().getId()));
     }
 

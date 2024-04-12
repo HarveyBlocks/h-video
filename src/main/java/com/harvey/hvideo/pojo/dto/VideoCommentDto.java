@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(description = "视频评论")
-public class VideoCommentDTO {
+public class VideoCommentDto implements Serializable {
     @ApiModelProperty("发布者nickName")
     private String nickName;
 
@@ -32,7 +33,7 @@ public class VideoCommentDTO {
 
     @ApiModelProperty("创建时间")
     private LocalDateTime createTime;
-    public VideoCommentDTO(VideoComment videoComment, User user, String parentUserName){
+    public VideoCommentDto(VideoComment videoComment, User user, String parentUserName){
         this.createTime = videoComment.getCreateTime();
         this.content = videoComment.getContent();
         this.nickName = user.getNickName();
@@ -41,7 +42,7 @@ public class VideoCommentDTO {
             this.parentNickName = parentUserName;
         }
     }
-    public VideoCommentDTO(VideoComment videoComment, User user){
+    public VideoCommentDto(VideoComment videoComment, User user){
         this(videoComment,user,null);
     }
 }

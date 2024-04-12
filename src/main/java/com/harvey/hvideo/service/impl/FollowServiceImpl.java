@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.dao.FollowMapper;
-import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.entity.Follow;
 import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.service.FollowService;
@@ -139,7 +139,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     private UserService userService;
 
     @Override
-    public List<UserDTO> followInteraction(Long user1Id, Long user2Id) {
+    public List<UserDto> followInteraction(Long user1Id, Long user2Id) {
         log.debug(String.valueOf(user1Id));
         log.debug(String.valueOf(user2Id));
         Set<String> ids = stringRedisTemplate.opsForSet()
@@ -152,7 +152,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     }
 
     @Override
-    public List<UserDTO> friendList(Long userId) {
+    public List<UserDto> friendList(Long userId) {
 
         Set<String> ids = stringRedisTemplate.opsForSet().members(FollowService.followedKey(userId));
         if (ids == null || ids.isEmpty()) {
@@ -172,7 +172,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     }
 
     @Override
-    public List<UserDTO> followList(Long id) {
+    public List<UserDto> followList(Long id) {
         Set<String> ids = stringRedisTemplate.opsForSet().members(FollowService.followedKey(id));
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
@@ -181,7 +181,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     }
 
     @Override
-    public List<UserDTO> queryFanList(Long authorId, Integer current) {
+    public List<UserDto> queryFanList(Long authorId, Integer current) {
         // 获取登录用户
         // 根据用户查询
         List<Follow> records = baseMapper.selectPage(
@@ -194,9 +194,9 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         return userIds2User(fanIds);
     }
 
-    private List<UserDTO> userIds2User(Collection<String> ids) {
+    private List<UserDto> userIds2User(Collection<String> ids) {
         return userService.listByIds(ids).stream()
-                .map(UserDTO::new)
+                .map(UserDto::new)
                 .collect(Collectors.toList());
     }
 }

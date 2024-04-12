@@ -302,7 +302,7 @@ CREATE TABLE `tb_video_comment`
 
 > 评论和异步
 
-异步使用了阻塞式队列...我不满意! 不够分布式! 但是我不想启动MQ.....qwq
+异步使用了阻塞式队列...我不满意! 不够解耦合! 但是我不想启动MQ.....qwq
 
 
 还有
@@ -634,3 +634,62 @@ com.harvey.hvideo.service.impl.VideoServiceImpl.queryVideoByTittle
 com.harvey.hvideo.service.impl.VideoServiceImpl.queryFollowVideos
 
 使用滚动分页查询, 用拉模式实现的Timeline
+
+
+# Java 第五轮考核
+[第五次作业](https://github.com/HarveyBlocks/chat)
+
+## 任务
+
+编写一个 IM 即时通信系统
+
+- 支持单聊, 群聊
+- 支持查找**一定时间**内的聊天记录
+- websocket模块
+- 用户模块
+- 联系人模块
+- 信息模块
+- 会话模块
+
+redis->
+聊天记录
+key: list/zset + json -> from to content time 先入先出, 很合理
+
+key? 俩人的id. 顺序怎么说? A->B和B->A是一样的
+生成key的时候,把俩人的ID给比较一下, 然后再组合...?
+MySQL里一张表, 三个字段: 用户1id, 用户2id, 他俩会话的id, id用雪花生成
+要存俩组吗?还是说查的时候查两遍?
+值是zset+json+timestamp
+每次访问之前记录就删除过期的值?懒惰删除
+
+会话接口,
+from, to,
+返回他俩的聊天记录
+
+会话列表, 当前用户, 和谁有过对话?
+MySQl的会话表, 用户1查所有用户2, 要存俩组吗?还是说查的时候查两遍?
+
+
+- 聊天内容，使用Redis + Mysql的方式实现，
+- 会话列表，
+- 支持文字，图片交流，
+- 屏蔽功能
+
+### Bonus
+
+1. 请考虑你的聊天系统的性能（例如使用Benchmark测试）
+2. netty实现websocket
+3. 考虑聊天传输的安全性（可以学习一下Telegram是如何保证传输安全性的，但是现阶段是做不到的，可以尝试做一些小的安全性优化）
+4. 使用消息队列（RabbitMQ、RocketMQ、Kafka等）
+5. 敏感词功能
+6. ip获取+归属地
+7. 未读消息数
+
+
+
+## 参考
+
+- `spring-boot-starter-websocket`
+- 使用SpringBoot作为基础框架暴露http路由
+- [WebSocket 的 6 种集成方式](https://juejin.cn/post/7111132777394733064)
+- [SpringBoot如何集成RabbitMQ](https://juejin.cn/post/7155754742113632293)

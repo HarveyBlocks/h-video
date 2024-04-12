@@ -1,7 +1,7 @@
 package com.harvey.hvideo.util;
 
 import com.harvey.hvideo.exception.UnauthorizedException;
-import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.UserDto;
 
 /**
  * 将用户信息存在ThreadLocal,方便取用
@@ -11,13 +11,13 @@ import com.harvey.hvideo.pojo.dto.UserDTO;
  * @date 2024-02-01 14:12
  */
 public class UserHolder {
-    private static final ThreadLocal<UserDTO> TL = new ThreadLocal<>();
+    private static final ThreadLocal<UserDto> TL = new ThreadLocal<>();
 
-    public static void saveUser(UserDTO user){
+    public static void saveUser(UserDto user){
         TL.set(user);
     }
 
-    public static UserDTO getUser(){
+    public static UserDto getUser(){
         return TL.get();
     }
 

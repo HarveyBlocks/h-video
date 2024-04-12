@@ -4,7 +4,7 @@ package com.harvey.hvideo.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.harvey.hvideo.exception.BadRequestException;
-import com.harvey.hvideo.pojo.vo.FileWithUserId;
+import com.harvey.hvideo.pojo.dto.FileWithUserId;
 import com.harvey.hvideo.service.UploadService;
 import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.RedissonLock;

@@ -8,7 +8,7 @@ spring:
     druid:
       url: jdbc:mysql://${h-video.db.host}:3306/h_video?useSSL=false&serverTimezone=UTC
       username: root
-      password: ******
+      password: ${h-video.db.password}
       driver-class-name: com.mysql.cj.jdbc.Driver
       initialSize: 5
       minIdle: 5
@@ -20,7 +20,7 @@ spring:
   redis:
     host: ${h-video.redis.host}
     port: 6379
-    password: ******
+    password: ${h-video.redis.password}
     lettuce:
       pool:
         max-active: 10
@@ -59,7 +59,7 @@ h-video:
   jwt:
     location: classpath:hmall.jks
     alias: hmall
-    password: ****** # 解析文件的密钥(文件本身也是密钥)
+    password: ${h-video.jwt.jks.password} # 解析文件的密钥(文件本身也是密钥)
     tokenTTL: 30m
   auth:
     include-paths:
@@ -80,3 +80,5 @@ h-video:
     clear-click-history-wait-seconds: 600
     max-page-size: 10
     default-page-size: 5
+    sensitive-words:
+      - "敏感"

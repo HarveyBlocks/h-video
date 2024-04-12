@@ -7,9 +7,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.dao.VideoMapper;
-import com.harvey.hvideo.pojo.dto.UserDTO;
-import com.harvey.hvideo.pojo.dto.VideoDTO;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.dto.VideoDoc;
+import com.harvey.hvideo.pojo.dto.VideoDto;
 import com.harvey.hvideo.pojo.entity.Follow;
 import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.pojo.entity.Video;
@@ -40,10 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -119,7 +116,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
 
     @Override
-    public List<VideoDTO> queryHotVideo(Integer current) {
+    public List<VideoDto> queryHotVideo(Integer current) {
         // 根据用户查询
         Page<Video> page = this.query()
                 .orderByDesc("click")
@@ -128,20 +125,29 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         List<Video> records = page.getRecords();
         // 查询用户
         records.forEach(this::addAuthor);
-        return records.stream().map(VideoDTO::new).collect(Collectors.toList());
+        return records.stream().map(VideoDto::new).collect(Collectors.toList());
     }
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public List<VideoDTO> queryMyVideo(Integer current) {
+    public List<VideoDto> queryMyVideo(Integer current) {
         // 获取登录用户
-        UserDTO user = UserHolder.getUser();
+        UserDto user = UserHolder.getUser();
+        if(user==null){
+            return Collections.emptyList();
+        }
         // 根据用户查询
-        Page<Video> page = this.query().select("id", "title", "kicked", "images", "comments").eq("user_id", user.getId()).page(new Page<>(current, Constants.MAX_PAGE_SIZE));
+        Page<Video> page = this.query()
+                .select("id", "title", "kicked", "images", "comments")
+                .eq("user_id", user.getId())
+                .page(new Page<>(current, Constants.MAX_PAGE_SIZE));
+        if(page==null){
+            return Collections.emptyList();
+        }
         // 获取当前页数据
-        return page.getRecords().stream().map(VideoDTO::new).collect(Collectors.toList());
+        return page.getRecords().stream().map(VideoDto::new).collect(Collectors.toList());
     }
 
     @Resource
@@ -168,7 +174,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     }
 
     @Override
-    public ScrollResult<VideoDTO> queryFollowVideos(Long lastTimestamp, Integer offset) {
+    public ScrollResult<VideoDto> queryFollowVideos(Long lastTimestamp, Integer offset) {
         Set<ZSetOperations.TypedTuple<String>> typedTuples = getVideoIdsWithTimestamp(lastTimestamp, offset);
         if (typedTuples == null || typedTuples.isEmpty()) {
             log.error("没有");
@@ -200,7 +206,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         List<Video> videos = queryCompleteVideos(videoIds);
         log.debug("newOffset=" + newOffset);
         log.debug("minTime=" + minTime);
-        return new ScrollResult<>(videos.stream().map(VideoDTO::new)
+        return new ScrollResult<>(videos.stream().map(VideoDto::new)
                 .collect(Collectors.toList()), minTime, newOffset);
     }
 
@@ -211,7 +217,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
      * @param current 当前页码
      */
     @Override
-    public List<VideoDTO> queryVideoByTittle(Integer current, String tittle) {
+    public List<VideoDto> queryVideoByTittle(Integer current, String tittle) {
         // 1. 创建SearchRequest请求,GET /索引库/_search
         SearchRequest request = new SearchRequest(VIDEO_INDEX);
 
@@ -243,7 +249,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         // 7. 遍历,转化
         return Arrays.stream(hits).map(
                 // 解析Json字符
-                hit -> new VideoDTO(new Video(JSON.parseObject(
+                hit -> new VideoDto(new Video(JSON.parseObject(
                         // 获取数据信息
                         hit.getSourceAsString(), VideoDoc.class)
                 ))).collect(Collectors.toList());

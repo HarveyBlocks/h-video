@@ -2,7 +2,7 @@ package com.harvey.hvideo.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.entity.Follow;
 import com.harvey.hvideo.util.RedisConstants;
 
@@ -27,11 +27,11 @@ public interface FollowService extends IService<Follow> {
 
     boolean isFollowed(Long authorId);
 
-    List<UserDTO> followInteraction(Long user1Id, Long user2Id);
+    List<UserDto> followInteraction(Long user1Id, Long user2Id);
 
-    List<UserDTO> friendList(Long userId);
+    List<UserDto> friendList(Long userId);
 
-    List<UserDTO> followList(Long id);
+    List<UserDto> followList(Long id);
 
-    List<UserDTO> queryFanList(Long authorId, Integer current);
+    List<UserDto> queryFanList(Long authorId, Integer current);
 }

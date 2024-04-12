@@ -1,10 +1,11 @@
-package com.harvey.hvideo.pojo.vo;
+package com.harvey.hvideo.pojo.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.Serializable;
 
 /**
  * 用于异步存储视频文件,因为新线程不能获取当前请求的用户id.实在是取不出名字来了
@@ -15,7 +16,7 @@ import java.io.File;
  */
 @Data
 @AllArgsConstructor
-public class FileWithUserId {
+public class FileWithUserId implements Serializable {
     private MultipartFile file;
     private File target;
     private long userId;

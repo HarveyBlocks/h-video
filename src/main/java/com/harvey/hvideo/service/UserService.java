@@ -2,9 +2,9 @@ package com.harvey.hvideo.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.harvey.hvideo.pojo.dto.LoginFormDTO;
-import com.harvey.hvideo.pojo.dto.RegisterFormDTO;
-import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.LoginFormDto;
+import com.harvey.hvideo.pojo.dto.RegisterFormDto;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.entity.User;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,15 +47,15 @@ public interface UserService extends IService<User> {
     User loginByPassword(String phone, String password);
 
 
-    String chooseLoginWay(LoginFormDTO loginForm);
+    String chooseLoginWay(LoginFormDto loginForm);
 
-    String register(RegisterFormDTO registerForm);
+    String register(RegisterFormDto registerForm);
 
     @Transactional
-    void updateUser(UserDTO userDTO, String token);
+    void updateUser(UserDto userDTO, String token);
 
-    UserDTO queryUserByIdWithRedisson(Long userId) throws InterruptedException;
+    UserDto queryUserByIdWithRedisson(Long userId) throws InterruptedException;
 
     @Deprecated
-    UserDTO queryUserById(Long userId);
+    UserDto queryUserById(Long userId);
 }

@@ -2,7 +2,7 @@ package com.harvey.hvideo.interceptor;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.harvey.hvideo.Constants;
-import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.util.JwtTool;
 import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.UserHolder;
@@ -79,7 +79,7 @@ public class ExpireInterceptor implements HandlerInterceptor {
             return true;
         }
         // 第三个参数: 是否忽略转换过程中产生的异常
-        UserDTO user = BeanUtil.fillBeanWithMap(userFieldMap, new UserDTO(), false);
+        UserDto user = BeanUtil.fillBeanWithMap(userFieldMap, new UserDto(), false);
 
 
 //        System.err.println("4");

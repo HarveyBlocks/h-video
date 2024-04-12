@@ -37,6 +37,11 @@ public class Result<T> {
         this.code = 200;
         this.data = data;
     }
+    public Result(T data, String msg) {
+        this.code = 200;
+        this.data = data;
+        this.msg = msg;
+    }
     public Result(Integer code,String errorMsg) {
         this.code = code;
         this.msg = errorMsg;

@@ -16,7 +16,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @ApiModel(description = "视频简要信息")
-public class VideoDTO implements Serializable {
+public class VideoDto implements Serializable {
 
     @ApiModelProperty("作者昵称")
     private String nickName;
@@ -30,7 +30,7 @@ public class VideoDTO implements Serializable {
     @ApiModelProperty("评论量")
     private Integer comments;
 
-    public VideoDTO(Video video){
+    public VideoDto(Video video){
         this.nickName = video.getNickName();
         this.title = video.getTitle();
         this.click = video.getClick();

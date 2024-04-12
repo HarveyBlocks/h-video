@@ -3,9 +3,9 @@ package com.harvey.hvideo.controller;
 import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.exception.BadRequestException;
 import com.harvey.hvideo.exception.ResourceNotFountException;
-import com.harvey.hvideo.pojo.dto.LoginFormDTO;
-import com.harvey.hvideo.pojo.dto.RegisterFormDTO;
-import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.LoginFormDto;
+import com.harvey.hvideo.pojo.dto.RegisterFormDto;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/user")
 @EnableConfigurationProperties(ConstantsProperties.class)
 public class UserController {
+    public static final String USERNAME_SESSION_KEY = "user";
     @Resource
     private UserService userService;
 
@@ -76,7 +77,7 @@ public class UserController {
     @PostMapping("/login")
     @ApiOperation("登录")
     public Result<Null> login(@RequestBody @ApiParam("需要用户登录的Json,密码和验证码二选一")
-                              LoginFormDTO loginForm, HttpServletResponse response) {
+                              LoginFormDto loginForm, HttpServletResponse response) {
         //实现登录功能
         // System.out.println(result);
         String token = userService.chooseLoginWay(loginForm);
@@ -92,7 +93,7 @@ public class UserController {
     @PostMapping("/register")
     @ApiOperation("注册")
     public Result<Null> register(@RequestBody @ApiParam("需要用户注册的Json,使用密码")
-                                 RegisterFormDTO registerForm, HttpServletResponse response) {
+                                 RegisterFormDto registerForm, HttpServletResponse response) {
 //        System.err.println("hi");
         //实现注册功能
         String token = userService.register(registerForm);
@@ -117,7 +118,7 @@ public class UserController {
 
     @ApiOperation("获取当前登录的用户并返回")
     @GetMapping("/me")
-    public Result<UserDTO> me() {
+    public Result<UserDto> me() {
         // 获取当前登录的用户并返回
         return new Result<>(UserHolder.getUser());
     }
@@ -127,8 +128,8 @@ public class UserController {
      */
     @GetMapping("/{id}")
     @ApiOperation("根据id查询用户")
-    public Result<UserDTO> queryUserById(@PathVariable("id") Long userId) {
-        UserDTO userDTO;
+    public Result<UserDto> queryUserById(@PathVariable("id") Long userId) {
+        UserDto userDTO;
         try {
             userDTO = userService.queryUserByIdWithRedisson(userId);
         } catch (InterruptedException e) {
@@ -143,7 +144,7 @@ public class UserController {
 
     @GetMapping("/create")
     @ApiOperation(value = "测试用接口,生成虚假的User", notes = "生成100个虚假的用户,存入Redis")
-    public Result<UserDTO> createUser() {
+    public Result<UserDto> createUser() {
         for (int i = 0; i < 1; i++) {
             Map<String, String> map = new HashMap<>();
             int token = i + 10000;
@@ -154,7 +155,7 @@ public class UserController {
             map.put("icon", "");
             stringRedisTemplate.opsForHash().putAll(key, map);
         }
-        return new Result<>(new UserDTO(1, 1L, "nickName", "icon"));
+        return new Result<>(new UserDto(1, 1L, "nickName", "icon"));
     }
 
     @Resource
@@ -165,7 +166,7 @@ public class UserController {
     @ApiOperation(value = "更新用户信息", notes = "没有更新的部分就传null或空字符串,不用传ID")
     @PutMapping("/update")
     public Result<Null> update(@RequestBody @ApiParam("需要用户注册的Json,使用密码")
-                               UserDTO userDTO,
+                                   UserDto userDTO,
                                @ApiParam(hidden = true) HttpServletRequest request) {
         // 删除原有头像
         if (userDTO.getIcon() != null && !userDTO.getIcon().isEmpty()) {

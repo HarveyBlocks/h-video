@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.harvey.hvideo.pojo.dto.UserDTO;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.enums.Role;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -73,7 +73,7 @@ public class User implements Serializable {
     public User() {
     }
 
-    public User(UserDTO userDTO) {
+    public User(UserDto userDTO) {
         this.nickName = userDTO.getNickName();
         this.icon = userDTO.getIcon();
         this.id = userDTO.getId();

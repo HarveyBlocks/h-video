@@ -16,7 +16,9 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @SpringBootApplication
 @EnableAspectJAutoProxy(exposeProxy = true)
 public class HVideoApplication {
+
     public static void main(String[] args) {
         SpringApplication.run(HVideoApplication.class, args);
     }
+
 }

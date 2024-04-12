@@ -3,8 +3,8 @@ package com.harvey.hvideo.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.harvey.hvideo.Constants;
-import com.harvey.hvideo.pojo.dto.UserDTO;
-import com.harvey.hvideo.pojo.dto.VideoDTO;
+import com.harvey.hvideo.pojo.dto.UserDto;
+import com.harvey.hvideo.pojo.dto.VideoDto;
 import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.pojo.vo.Null;
 import com.harvey.hvideo.pojo.vo.Result;
@@ -40,7 +40,7 @@ public class VideoController {
     @PostMapping
     public Result<Null> saveVideo(@RequestBody Video video) {
         // 获取登录用户
-        UserDTO user = UserHolder.getUser();
+        UserDto user = UserHolder.getUser();
         video.setUserId(user.getId());
         // 保存视频
         try {
@@ -71,7 +71,7 @@ public class VideoController {
      */
     @ApiOperation("查询自己发布的视频")
     @GetMapping("/of/me")
-    public Result<List<VideoDTO>> queryMyVideo(
+    public Result<List<VideoDto>> queryMyVideo(
             @RequestParam(value = "current", defaultValue = "1")
             @ApiParam("页码,[1,...),默认1") Integer current) {
         return new Result<>(videoService.queryMyVideo(current));
@@ -79,7 +79,7 @@ public class VideoController {
 
     @ApiOperation("滚动分页查询关注的人发布的视频")
     @GetMapping("/of/follow")
-    public Result<ScrollResult<VideoDTO>> followVideos(
+    public Result<ScrollResult<VideoDto>> followVideos(
             @RequestParam("lastId")
             @ApiParam("上一次查询的最后一个Video的标识,第一次传当前时间,后来的偏移量后端会传给你的, 下一次请求就再把这个标识传给后端")
             Long lastTimestamp,
@@ -97,7 +97,7 @@ public class VideoController {
      */
     @ApiOperation("查询热门视频(关于点击量)")
     @GetMapping("/hot")
-    public Result<List<VideoDTO>> queryHotVideo(
+    public Result<List<VideoDto>> queryHotVideo(
             @RequestParam(value = "current", defaultValue = "1")
             @ApiParam("页码,[1,...),默认1") Integer current) {
         return new Result<>(videoService.queryHotVideo(current));
@@ -110,7 +110,7 @@ public class VideoController {
      */
     @ApiOperation("依据标题查视频")
     @GetMapping("/search")
-    public Result<List<VideoDTO>> queryVideoByTittle(
+    public Result<List<VideoDto>> queryVideoByTittle(
             @RequestParam(value = "current", defaultValue = "1")
             @ApiParam("页码,[1,...),默认1") Integer current,
             @RequestParam(value = "tittle", defaultValue = "1")
@@ -121,7 +121,7 @@ public class VideoController {
 
     @ApiOperation("查询某用户的视频")
     @GetMapping("/of/user")
-    public Result<List<VideoDTO>> queryVideoByUserId(
+    public Result<List<VideoDto>> queryVideoByUserId(
             @RequestParam(value = "current", defaultValue = "1")
             @ApiParam("页码,[1,...),默认1") Integer current,
             @RequestParam("id") @ApiParam("用户id") Long id) {
@@ -131,7 +131,7 @@ public class VideoController {
         // 获取当前页数据
         List<Video> records = page.getRecords();
         return new Result<>(records
-                .stream().map(VideoDTO::new).collect(Collectors.toList()));
+                .stream().map(VideoDto::new).collect(Collectors.toList()));
     }
 
 
