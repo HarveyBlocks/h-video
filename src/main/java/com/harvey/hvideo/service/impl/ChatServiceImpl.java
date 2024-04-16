@@ -98,11 +98,23 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
         }
         // 命令           From        Target
         // Chat         当前用户       getTarget    发送content 是文字就存Redis
+        // 封装Result , 存到Redis, 存到MySQL, 发送
+        Long target = chatCommand.getTarget();
+        Long userId = UserHolder.currentUserId();
+        User targetUser = userService.getById(target);
+        if (targetUser == null) {
+            log.error("目标用户不存在数据库中");
+            UserDto from = new UserDto(1,0L,"System","null");
+            Result<MessageDto> result = new Result<>(new MessageDto(from, "目标用户不存在"), "系统信息");
+            String resultJson = JSON.toJSONString(result);
+            send2User(resultJson, userId);
+            return;
+        }
         if (chatCommand.getContent() != null) {
-            this.chat(UserHolder.currentUserId(), chatCommand.getTarget(), chatCommand.getContent());
+            this.chat(userId, target, chatCommand.getContent());
         } else if (chatCommand.getImage() != null) {
             log.warn("建议先用图片上传接口传输图片, 然后获取到图片地址, 然后吧图片地址作为Content过来, 走content的if分支");
-            this.chat(UserHolder.currentUserId(), chatCommand.getTarget(), chatCommand.getImage());
+            this.chat(userId, target, chatCommand.getImage());
         } else {
             log.error("啥都没有你发个啥 ? ");
         }
@@ -132,13 +144,7 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
 
     private void chat(Long userId, Long target, String content) {
         filter(content);
-        // 封装Result , 存到Redis, 存到MySQL, 发送
-        User user = userService.getById(userId);
-        if (user == null) {
-            log.error("当前用户不存在数据库中");
-            return;
-        }
-        UserDto from = new UserDto(user);
+        UserDto from = UserHolder.getUser();
         Result<MessageDto> result = new Result<>(new MessageDto(from, content), "私聊文字");
         String resultJson = JSON.toJSONString(result);
         SINGLE.execute(() -> {
@@ -159,12 +165,7 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
 
     private void chat(Long userId, Long target, byte[] image) {
         // 封装Result
-        User user = userService.getById(userId);
-        if (user == null) {
-            log.error("当前用户不存在数据库中");
-            return;
-        }
-        UserDto from = new UserDto(user);
+        UserDto from = UserHolder.getUser();
         Result<MessageDto> result = new Result<>(new MessageDto(from, image), "私聊图片");
         String resultJson = JSON.toJSONString(result);
         send2User(resultJson, target);
