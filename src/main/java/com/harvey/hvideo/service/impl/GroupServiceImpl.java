@@ -189,11 +189,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
     private void chat(Long from, Long groupId, String content) {
         chatService.filter(content);
         // 封装Result , 存到Redis, 存到MySQL, 发送
-        User user = userService.getById(from);
-        if (user == null) {
-            log.error("当前用户不存在???");
-            return;
-        }
+        UserDto userDto = UserHolder.getUser();
         Group group = this.getById(groupId);
         if (group == null) {
             Result<?>  result = new Result<>(404, "当前群聊不存在");
@@ -201,7 +197,6 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
             chatService.broadcastUsers(resultJson, List.of(from));
             return;
         }
-        UserDto userDto = new UserDto(user);
         Result<MessageDto> result = new Result<>(new MessageDto(userDto, group, content), "群聊文字");
         String resultJson = JSON.toJSONString(result);
         SINGLE.execute(() -> {
@@ -216,11 +211,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
 
 
     private void chat(Long from, Long groupId, byte[] image) {
-        User user = userService.getById(from);
-        if (user == null) {
-            log.error("当前用户不存在???");
-            return;
-        }
+        UserDto userDto = UserHolder.getUser();
         Group group = this.getById(groupId);
         if (group == null) {
             Result<?> result = new Result<>(404, "当前群聊不存在");
@@ -228,7 +219,6 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
             chatService.broadcastUsers(resultJson, List.of(from));
             return;
         }
-        UserDto userDto = new UserDto(user);
         Result<?> result = new Result<>(new MessageDto(userDto, group, image), "群聊图片");
 
         String resultJson = JSON.toJSONString(result);
