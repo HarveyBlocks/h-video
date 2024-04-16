@@ -4,7 +4,7 @@ spring:
   application:
     name: h-video
   datasource:
-#    type: com.alibaba.druid.pool.DruidDataSource
+    #    type: com.alibaba.druid.pool.DruidDataSource
     druid:
       url: jdbc:mysql://${h-video.db.host}:3306/h_video?useSSL=false&serverTimezone=UTC
       username: root
@@ -82,3 +82,4 @@ h-video:
     default-page-size: 5
     sensitive-words:
       - "敏感"
+      - "这是敏感词"

@@ -1,15 +1,22 @@
 package com.harvey.hvideo.config;
 
+import com.harvey.hvideo.controller.ChatEndpoint;
 import com.harvey.hvideo.interceptor.AuthorizeInterceptor;
 import com.harvey.hvideo.interceptor.ExpireInterceptor;
 import com.harvey.hvideo.interceptor.LoginInterceptor;
 import com.harvey.hvideo.properties.AuthProperties;
 import com.harvey.hvideo.util.JwtTool;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -23,6 +30,7 @@ import java.util.List;
  * @date 2024-01-03 14:12
  */
 @Configuration
+@EnableWebSocket
 @EnableConfigurationProperties(AuthProperties.class)
 public class MvcConfig implements WebMvcConfigurer {
     @Resource
@@ -31,11 +39,12 @@ public class MvcConfig implements WebMvcConfigurer {
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private JwtTool jwtTool;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
 
         registry.addInterceptor(
-                new ExpireInterceptor(stringRedisTemplate,jwtTool));
+                new ExpireInterceptor(stringRedisTemplate, jwtTool));
 
 
         List<String> excludePaths = authProperties.getExcludePaths();
@@ -53,4 +62,12 @@ public class MvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(new AuthorizeInterceptor())
                 .excludePathPatterns(includePaths);
     }
+
+
+
+    @Bean
+    public ServerEndpointExporter serverEndpointExporter (){
+        return new ServerEndpointExporter();
+    }
+
 }

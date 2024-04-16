@@ -3,10 +3,17 @@ package com.harvey.hvideo.interceptor;
 import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.pojo.enums.Role;
 import com.harvey.hvideo.util.UserHolder;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 /**
  * 授权拦截器
@@ -30,5 +37,6 @@ public class AuthorizeInterceptor implements HandlerInterceptor {
         }
         return true;
     }
+
 
 }

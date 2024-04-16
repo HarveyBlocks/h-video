@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @date 2024-02-01 14:10
  */
 public interface UserService extends IService<User> {
-
+    public static final String TIME_FIELD = "times";
     /**
      * 生成校验码并发送
      *

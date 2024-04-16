@@ -1,5 +1,6 @@
 package com.harvey.hvideo.pojo.dto;
 
+import com.harvey.hvideo.pojo.entity.Group;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,6 +15,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class MessageDto implements Serializable {
     private UserDto fromUser;
+    private Group group;
     private String content;
     private byte[] image;
 
@@ -25,5 +27,17 @@ public class MessageDto implements Serializable {
     public MessageDto(UserDto fromUser, String content) {
         this.fromUser = fromUser;
         this.content = content;
+    }
+
+    public MessageDto(UserDto fromUser, Group fromGroup, byte[] image) {
+        this.fromUser = fromUser;
+        this.image = image;
+        this.group = fromGroup;
+    }
+
+    public MessageDto(UserDto fromUser, Group fromGroup , String content) {
+        this.fromUser = fromUser;
+        this.content = content;
+        this.group = fromGroup;
     }
 }

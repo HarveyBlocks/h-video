@@ -215,7 +215,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setUpdateTime(LocalDateTime.now());
         // 更新
 
-        // TODO 删除Redis数据
         String tokenKey = RedisConstants.LOGIN_USER_KEY + jwtTool.parseToken(token);
         stringRedisTemplate.delete(tokenKey);
         // 更新数据库
@@ -285,7 +284,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 "nickName", user.getNickName(),
                 "role", user.getRole().toString(),
                 "icon", user.getIcon(),
-                "time", Constants.RESTRICT_REQUEST_TIMES
+                TIME_FIELD, Constants.RESTRICT_REQUEST_TIMES
         );
     }
 

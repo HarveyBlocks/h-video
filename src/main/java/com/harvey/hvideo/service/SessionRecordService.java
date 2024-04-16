@@ -16,6 +16,7 @@ import java.util.List;
  */
 public interface SessionRecordService extends IService<SessionRecord> {
     String PERSON_CONTENT_KEY = "video:chat:person:content:";
+    String USER_INBOX_KEY = "video:chat:user:inbox:";
     String GROUP_MEMBER_KEY = "video:chat:group:members";
     String GROUP_CONTENT_KEY = "video:chat:group:content";
     long TIME_INTERVAL = 60 * 60 * 1000; // 一小时

@@ -3,16 +3,24 @@ package com.harvey.hvideo.interceptor;
 import cn.hutool.core.bean.BeanUtil;
 import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.pojo.dto.UserDto;
+import com.harvey.hvideo.util.IpTool;
 import com.harvey.hvideo.util.JwtTool;
 import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static com.harvey.hvideo.service.UserService.TIME_FIELD;
 
 /**
  * 登录拦截器,会从Redis中查出用户的信息, 查到了就存入ThreadLocal
@@ -21,7 +29,8 @@ import java.util.concurrent.TimeUnit;
  * @version 1.0
  * @date 2024-01-03 13:32
  */
-public class ExpireInterceptor implements HandlerInterceptor {
+@Component
+public class ExpireInterceptor implements HandlerInterceptor  {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final JwtTool jwtTool;
@@ -39,40 +48,51 @@ public class ExpireInterceptor implements HandlerInterceptor {
         // 进入controller之前进行登录校验
 
 //        System.err.println("1");
-        String id;
-        // 获取请求头中的token
         String token = request.getHeader(Constants.AUTHORIZATION_HEADER);//依据前端的信息
+
+        // 获取请求头中的token
+        String id;
         if (token == null || token.isEmpty()) {
             id = request.getRemoteAddr();
+            // IP归属地
+            String[] regin = IpTool.map(id);
         }else {
             id = jwtTool.parseToken(token).toString();
         }
-//        System.err.println("2");
+        return doPreHandle(id);
+    }
+
+    public boolean doPreHandle(String id) {
+        //        System.err.println("2");
 
         // 获取user数据
         String tokenKey = RedisConstants.LOGIN_USER_KEY + id;
         Map<Object, Object> userFieldMap = stringRedisTemplate.opsForHash().entries(tokenKey);
+
         if (userFieldMap.isEmpty()) {
             // entries不会返回null
             // 用户不存在,就是游客,也给他限个流
-            stringRedisTemplate.opsForHash().put(tokenKey,"time",Constants.RESTRICT_REQUEST_TIMES);
-            userFieldMap.put("time","20");
+            stringRedisTemplate.opsForHash()
+                    .put(tokenKey, TIME_FIELD,Constants.RESTRICT_REQUEST_TIMES);
+            userFieldMap.put(TIME_FIELD,Constants.RESTRICT_REQUEST_TIMES);
         }
 
 //        System.err.println("3");
 
         // 更新时间
         if (RedisConstants.LOGIN_USER_TTL != -1L) {
-            stringRedisTemplate.expire(tokenKey, RedisConstants.LOGIN_USER_TTL, TimeUnit.MINUTES);
+            stringRedisTemplate
+                    .expire(tokenKey, RedisConstants.LOGIN_USER_TTL, TimeUnit.MINUTES);
         }
 
-        String time = (String) userFieldMap.get("time");
+        String time = (String) userFieldMap.get(TIME_FIELD);
         if ("0".equals(time)) {
             return false;
         } else {
-            stringRedisTemplate.opsForHash().increment(tokenKey, "time", -1);
+            stringRedisTemplate.opsForHash()
+                    .increment(tokenKey, TIME_FIELD, -1);
         }
-        userFieldMap.remove("time");
+        userFieldMap.remove(TIME_FIELD);
         if (userFieldMap.isEmpty()){
             // 现在是游客的可以走了
             return true;
@@ -105,4 +125,5 @@ public class ExpireInterceptor implements HandlerInterceptor {
         // 完成Controller之后移除UserHolder, 以防下一次用这条线程的请求获取到不属于它的用户信息
         UserHolder.removeUser();
     }
+
 }

@@ -62,7 +62,8 @@ public class VideoCommentServiceImpl extends ServiceImpl<VideoCommentMapper, Vid
             return false;
         }
         boolean update = videoService.update()
-                .setSql("comments = comments + 1").eq("id", videoComment.getVideoId()).update();
+                .setSql("comments = comments + 1")
+                .eq("id", videoComment.getVideoId()).update();
         return update && this.save(videoComment);
     }
 }

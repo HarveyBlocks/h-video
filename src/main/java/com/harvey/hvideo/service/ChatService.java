@@ -3,6 +3,7 @@ package com.harvey.hvideo.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.harvey.hvideo.pojo.dto.ChatCommand;
 import com.harvey.hvideo.pojo.dto.GroupCommand;
+import com.harvey.hvideo.pojo.dto.MessageDto;
 import com.harvey.hvideo.pojo.entity.Message;
 
 import javax.websocket.Session;
@@ -28,9 +29,8 @@ public interface ChatService extends IService<Message> {
 
     void onOpen(Session session);
 
-    void onClose(Session session);
+    void onClose();
 
-    void onMessage(GroupCommand groupCommand);
 
     int insert(Message message);
 }
