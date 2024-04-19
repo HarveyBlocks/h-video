@@ -48,7 +48,7 @@ public class SessionRecordController {
     }
 
     @PostMapping("/chat")
-    @ApiOperation("会话")
+    @ApiOperation("待开发")
     public Result<Null> chat(@RequestBody String command) {
        // TODO拓展
         return Result.ok();

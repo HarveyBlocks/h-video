@@ -1,16 +1,13 @@
 package com.harvey.hvideo.controller;
 
 import com.alibaba.fastjson.JSON;
-import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.config.GetHttpSessionConfig;
-import com.harvey.hvideo.interceptor.ExpireInterceptor;
 import com.harvey.hvideo.pojo.dto.ChatCommand;
 import com.harvey.hvideo.pojo.dto.EndpointMessage;
 import com.harvey.hvideo.pojo.dto.GroupCommand;
 import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.service.ChatService;
 import com.harvey.hvideo.service.GroupService;
-import com.harvey.hvideo.util.JwtTool;
 import com.harvey.hvideo.util.RedisConstants;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +16,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.servlet.http.HttpSession;
 import javax.websocket.*;
-import javax.websocket.server.HandshakeRequest;
 import javax.websocket.server.ServerEndpoint;
-import javax.websocket.server.ServerEndpointConfig;
-import java.io.IOException;
 
 import static com.harvey.hvideo.service.UserService.TIME_FIELD;
 

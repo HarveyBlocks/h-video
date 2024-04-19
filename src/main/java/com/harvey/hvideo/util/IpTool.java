@@ -2,7 +2,6 @@ package com.harvey.hvideo.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.lionsoul.ip2region.xdb.Searcher;
-import org.w3c.dom.ranges.RangeException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -76,7 +75,7 @@ public class IpTool {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Arrays.stream(IpTool.map("210.34.59.73")).forEach(System.out::println);
         Arrays.stream(IpTool.map("127.0.0.1")).forEach(System.out::println);
         Arrays.stream(IpTool.map("localhost")).forEach(System.out::println);

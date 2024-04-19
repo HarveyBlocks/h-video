@@ -17,7 +17,7 @@ public class Constants {
     public static final Set<String> ROOT_AUTH_URI = Set.of("/user/create");
     public static final Integer MAX_PAGE_SIZE = 10;
     public static final Integer DEFAULT_PAGE_SIZE = 5;
-    public static final long CLEAR_CLICK_HISTORY_WAIT_SECONDS = 10*60;
+    public static final long CLEAR_CLICK_HISTORY_WAIT_MILLIONS = 10*60*1000;
 
     public static final long CHAT_RECORD_TIME_INTERVAL = 60 * 60 * 1000; // 一小时
 }

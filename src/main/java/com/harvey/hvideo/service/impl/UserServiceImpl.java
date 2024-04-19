@@ -373,7 +373,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                         unlock(lockKey);
                         return userDTO;
                     } else {
-                        // 没有强到锁
+                        // 没有抢到锁
                         log.debug("等待中...");
                         Thread.sleep(100);
                         // 没出现问题, 不是做读写操作的, 不需要释放锁

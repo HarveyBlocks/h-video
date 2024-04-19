@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.harvey.hvideo.Constants.CLEAR_CLICK_HISTORY_WAIT_MILLIONS;
+
 /**
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0
@@ -95,7 +97,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @PostConstruct
     public void delClickedHistory() {
         Timer timer = new Timer();
-        timer.schedule(new ClickedHistory(),10*60*1000L);
+        timer.schedule(new ClickedHistory(),CLEAR_CLICK_HISTORY_WAIT_MILLIONS);
     }
     class ClickedHistory extends TimerTask{
         @Override

@@ -2,8 +2,6 @@ package com.harvey.hvideo.test.utils;
 
 import com.harvey.hvideo.test.UserTest;
 
-import java.util.Random;
-
 /**
  * 电话号码随机生成
  *
