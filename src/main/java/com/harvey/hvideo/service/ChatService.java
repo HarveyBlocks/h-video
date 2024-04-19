@@ -2,8 +2,7 @@ package com.harvey.hvideo.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.harvey.hvideo.pojo.dto.ChatCommand;
-import com.harvey.hvideo.pojo.dto.GroupCommand;
-import com.harvey.hvideo.pojo.dto.MessageDto;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.entity.Message;
 
 import javax.websocket.Session;
@@ -23,13 +22,13 @@ public interface ChatService extends IService<Message> {
 
     void broadcastUsers(String json, Collection<Long> userIds);
 
-    void onMessage(ChatCommand chatCommand);
+    void onMessage(ChatCommand chatCommand, UserDto userDto);
 
     void filter(String content);
 
-    void onOpen(Session session);
+    void onOpen(Session session, UserDto user);
 
-    void onClose();
+    void onClose(UserDto userDto);
 
 
     int insert(Message message);

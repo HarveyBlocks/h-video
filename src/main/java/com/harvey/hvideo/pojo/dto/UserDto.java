@@ -29,7 +29,6 @@ public class UserDto implements Serializable {
     private String icon;
 
     public UserDto() {
-
     }
     public UserDto(User user) {
         this.role = user.getRole().getValue();

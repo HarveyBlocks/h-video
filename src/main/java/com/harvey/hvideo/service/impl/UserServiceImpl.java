@@ -137,7 +137,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 使用验证码登录
             String codeCache = stringRedisTemplate.opsForValue().get(RedisConstants.LOGIN_CODE_KEY + phone);
             if (codeCache == null || codeCache.isEmpty()) {
-                throw new BadRequestException("您的表单数据已丢失,请退出刷新重试");
+                throw new BadRequestException("该手机未申请验证码, 请确认手机号或是否已经请求验证码");
             }
             user = this.loginByCode(codeCache, phone, code);
             if (user == null) {
@@ -172,7 +172,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Transactional
     public String register(RegisterFormDto registerForm) {
         User registerUser = new User();
-        registerUser.setPhone(registerForm.getPhone());
+        String phone = registerForm.getPhone();
+        registerUser.setPhone(phone);
         registerUser.setPassword(passwordEncoder.encode(registerForm.getPassword()));
         registerUser.setNickName(registerForm.getNickName());
         registerUser.setIcon(registerForm.getIcon());
@@ -215,7 +216,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setUpdateTime(LocalDateTime.now());
         // 更新
 
-        String tokenKey = RedisConstants.LOGIN_USER_KEY + jwtTool.parseToken(token);
+        String tokenKey = RedisConstants.QUERY_USER_KEY + jwtTool.parseToken(token);
         stringRedisTemplate.delete(tokenKey);
         // 更新数据库
         UserService userService = (UserService) AopContext.currentProxy();
@@ -230,12 +231,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (userDTO == null) {
             throw new BadRequestException("用户信息为null");
         }
-        String tokenKey = RedisConstants.LOGIN_USER_KEY + jwtTool.parseToken(token);
-        saveUser2Redis(tokenKey, user2Map(userDTO), RedisConstants.LOGIN_USER_TTL);
+        String tokenKey = RedisConstants.QUERY_USER_KEY + jwtTool.parseToken(token);
+        saveUser2Redis(tokenKey, user2Map(userDTO), RedisConstants.QUERY_USER_TTL);
     }
 
-
-    private User selectByPhone(String phone) {
+    @Override
+    public User selectByPhone(String phone) {
         LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.select().eq(User::getPhone, phone);
         return baseMapper.selectOne(lambdaQueryWrapper);
@@ -251,7 +252,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public UserDto queryUserByIdWithRedisson(Long userId) throws InterruptedException {
         log.debug("queryMutexFixByLock");
-        String key = RedisConstants.LOGIN_USER_KEY + userId;
+        String key = RedisConstants.QUERY_USER_KEY + userId;
         // 从缓存查
         log.debug("用户:" + userId + "从缓存查");
         Map<Object, Object> userFieldMap = stringRedisTemplate.opsForHash().entries(key);
@@ -311,7 +312,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 存在,写入Cache,更改TTL
             log.debug("数据库中存在用户:" + id);
             userFieldMap = user2Map(userDTO);
-            ttl = RedisConstants.LOGIN_USER_TTL;
+            ttl = RedisConstants.QUERY_USER_TTL;
         } else {
             // 是虚假的用户,存入Redis,防止虚空索敌
             log.warn(id + "是虚假的用户,Redis中存入假数据中");
@@ -354,7 +355,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Deprecated
     public UserDto queryUserById(Long userId) {
         log.debug("queryMutexFixByLock");
-        String key = RedisConstants.LOGIN_USER_KEY + userId;
+        String key = RedisConstants.QUERY_USER_KEY + userId;
         while (true) {
             // 从缓存查
             log.debug("用户:" + userId + "从缓存查");

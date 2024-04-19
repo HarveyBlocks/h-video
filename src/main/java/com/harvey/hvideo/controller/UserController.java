@@ -79,6 +79,9 @@ public class UserController {
                               LoginFormDto loginForm, HttpServletResponse response) {
         //实现登录功能
         // System.out.println(result);
+        if (UserHolder.getUser()!=null) {
+            return new Result<>(400,"请不要重复登录");
+        }
         String token = userService.chooseLoginWay(loginForm);
         response.setHeader(Constants.AUTHORIZATION_HEADER, token);
         return Result.ok();
@@ -95,7 +98,14 @@ public class UserController {
                                  RegisterFormDto registerForm, HttpServletResponse response) {
 //        System.err.println("hi");
         //实现注册功能
+        User user = userService.selectByPhone(registerForm.getPhone());
+        if (user!=null){
+            return new Result<>(400,"用户已存在");
+        }
         String token = userService.register(registerForm);
+        if (token==null){
+            return new Result<>(500,"保存失败");
+        }
         response.setHeader(Constants.AUTHORIZATION_HEADER, token);
         return Result.ok();
     }
@@ -109,7 +119,7 @@ public class UserController {
     @ApiOperation("登出")
     @PostMapping("/logout")
     public Result<Null> logout(HttpServletResponse response) {
-        String tokenKey = RedisConstants.LOGIN_USER_KEY + UserHolder.currentUserId();
+        String tokenKey = RedisConstants.QUERY_USER_KEY + UserHolder.currentUserId();
         stringRedisTemplate.delete(tokenKey);
         response.setStatus(401);
         return Result.ok();
@@ -148,7 +158,7 @@ public class UserController {
             Map<String, String> map = new HashMap<>();
             int token = i + 10000;
             System.out.println(token);
-            String key = RedisConstants.LOGIN_USER_KEY + token;
+            String key = RedisConstants.QUERY_USER_KEY + token;
             map.put("id", String.valueOf(token));
             map.put("nickName", User.DEFAULT_NICKNAME);
             map.put("icon", "");

@@ -2,6 +2,7 @@ package com.harvey.hvideo.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.lionsoul.ip2region.xdb.Searcher;
+import org.w3c.dom.ranges.RangeException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -54,9 +55,12 @@ public class IpTool {
         }
         try {
             region = searcher.search(ip).split("\\|");
+            if (region.length>10) {
+                return new String[]{};
+            }
             log.debug("{region: {}, ioCount: {}}", Arrays.toString(region), searcher.getIOCount());
         } catch (Exception e) {
-            log.error("failed to search({}): ", ip, e);
+            log.error("failed to search({}): {}", ip, e.getMessage());
 
         }
         return region;

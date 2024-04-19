@@ -26,7 +26,7 @@ public class UserHolder {
     }
     public static Long currentUserId(){
         try {
-            return TL.get().getId();
+            return getUser().getId();
         } catch (NullPointerException e) {
             throw new UnauthorizedException("未登录");
         }

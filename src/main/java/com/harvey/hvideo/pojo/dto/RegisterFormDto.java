@@ -2,7 +2,9 @@ package com.harvey.hvideo.pojo.dto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -14,6 +16,8 @@ import java.io.Serializable;
  * @date 2024-02-01 14:05
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @ApiModel(description = "注册时需要的参数")
 public class RegisterFormDto implements Serializable {
     @ApiModelProperty("用户的电话号码,会在后端做正则的校验")

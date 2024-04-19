@@ -3,7 +3,7 @@ package com.harvey.hvideo.pojo.dto;
 import lombok.Data;
 
 /**
- * TODO
+ * Endpoint 的 传参的参数 ,json转缓存EndpointMessage
  *
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0

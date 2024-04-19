@@ -9,24 +9,30 @@ import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.entity.Group;
 import com.harvey.hvideo.pojo.entity.Message;
 import com.harvey.hvideo.pojo.entity.User;
-import com.harvey.hvideo.pojo.entity.Video;
 import com.harvey.hvideo.pojo.vo.Result;
 import com.harvey.hvideo.properties.ConstantsProperties;
 import com.harvey.hvideo.service.ChatService;
 import com.harvey.hvideo.service.SessionRecordService;
 import com.harvey.hvideo.service.UserService;
-import com.harvey.hvideo.util.UserHolder;
+import com.harvey.hvideo.util.RedisConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.websocket.Session;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -61,7 +67,7 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
             // 有需要排序, 范围查询之类的吗? 没有吗? 有吗?
             // 滚动查询?
             // list
-            stringRedisTemplate.opsForList().leftPush(SessionRecordService.USER_INBOX_KEY + userId, json);
+            stringRedisTemplate.opsForList().leftPush(RedisConstants.USER_INBOX_KEY + userId, json);
             return;
         }
         try {
@@ -92,7 +98,7 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
     }
 
     @Override
-    public void onMessage(ChatCommand chatCommand) {
+    public void onMessage(ChatCommand chatCommand, UserDto userDto) {
         if (chatCommand == null) {
             return;
         }
@@ -100,21 +106,20 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
         // Chat         当前用户       getTarget    发送content 是文字就存Redis
         // 封装Result , 存到Redis, 存到MySQL, 发送
         Long target = chatCommand.getTarget();
-        Long userId = UserHolder.currentUserId();
         User targetUser = userService.getById(target);
         if (targetUser == null) {
             log.error("目标用户不存在数据库中");
             UserDto from = new UserDto(1,0L,"System","null");
             Result<MessageDto> result = new Result<>(new MessageDto(from, "目标用户不存在"), "系统信息");
             String resultJson = JSON.toJSONString(result);
-            send2User(resultJson, userId);
+            send2User(resultJson, userDto.getId());
             return;
         }
         if (chatCommand.getContent() != null) {
-            this.chat(userId, target, chatCommand.getContent());
+            this.chat(userDto, target, chatCommand.getContent());
         } else if (chatCommand.getImage() != null) {
             log.warn("建议先用图片上传接口传输图片, 然后获取到图片地址, 然后吧图片地址作为Content过来, 走content的if分支");
-            this.chat(userId, target, chatCommand.getImage());
+            this.chat(userDto, target, chatCommand.getImage());
         } else {
             log.error("啥都没有你发个啥 ? ");
         }
@@ -142,42 +147,40 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
     }
 
 
-    private void chat(Long userId, Long target, String content) {
+    private void chat(UserDto from, Long target, String content) {
         filter(content);
-        UserDto from = UserHolder.getUser();
+        Long fromId = from.getId();
         Result<MessageDto> result = new Result<>(new MessageDto(from, content), "私聊文字");
         String resultJson = JSON.toJSONString(result);
+        ChatService thisService = (ChatService) AopContext.currentProxy();
         SINGLE.execute(() -> {
 
-            Long sessionRecordId = sessionService.createSessionIfNeeded(userId, target);
+            Long sessionRecordId = sessionService.createSessionIfNeeded(fromId, target);
             // 存到Redis, key是私聊ID, 一组私聊一个ID, value是contentID, score是当前时间
-
             // 存到MySQL
-            ChatService thisService = (ChatService) AopContext.currentProxy();
-            int contentId = thisService.insert(new Message(userId, content, sessionRecordId, null));
+            int contentId = thisService.insert(new Message(fromId, content, sessionRecordId, null));
             // 内容
-            String key = SessionRecordService.PERSON_CONTENT_KEY + sessionRecordId;
+            String key = RedisConstants.PERSON_CONTENT_KEY + sessionRecordId;
             stringRedisTemplate.opsForZSet().add(key, String.valueOf(contentId), System.currentTimeMillis());
         });
         send2User(resultJson, target);
     }
 
 
-    private void chat(Long userId, Long target, byte[] image) {
+    private void chat(UserDto from, Long target, byte[] image) {
         // 封装Result
-        UserDto from = UserHolder.getUser();
         Result<MessageDto> result = new Result<>(new MessageDto(from, image), "私聊图片");
         String resultJson = JSON.toJSONString(result);
         send2User(resultJson, target);
     }
 
     @Override
-    public void onOpen(Session session) {
+    public void onOpen(Session session, UserDto user) {
         // 1.2 存入集合. 需要键username
-        Long userId = UserHolder.currentUserId();
+        Long userId = user.getId();
         ChatService.ONLINE_USERS.put(userId, session);
-        String inboxKey = SessionRecordService.USER_INBOX_KEY + userId;
-        String json = null;
+        String inboxKey = RedisConstants.USER_INBOX_KEY + userId;
+        String json;
         HashMap<Group, Integer> groupMap = new HashMap<>();
         HashMap<UserDto, Integer> userMap = new HashMap<>();
         // 如果一开始就对存入Redis的内容有一个规范就好了,现在消息里有Result, 有Message, 很乱, 分不清
@@ -186,17 +189,18 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
             String dataJson = JSON.parseObject(json, Result.class).getData().toString();
             MessageDto messageDto = JSON.parseObject(dataJson, MessageDto.class);
             Group group = messageDto.getGroup();
-            UserDto user = messageDto.getFromUser();
+            UserDto from = messageDto.getFromUser();
             if (group != null) {
                 groupMap.merge(group, 1, Integer::sum);
-            } else if (user != null) {
-                userMap.merge(user, 1, Integer::sum);
+            } else if (from != null) {
+                userMap.merge(from, 1, Integer::sum);
             }else {
                 // 应该就不是MessageDto类了
+                log.warn("遇到了发送者和组皆为空的情况");
             }
         }
         List<String> userCounts = new ArrayList<>();
-        userMap.forEach((user, count) -> userCounts.add(JSON.toJSONString(new Result<>(user, count.toString()))));
+        userMap.forEach((from, count) -> userCounts.add(JSON.toJSONString(new Result<>(from, count.toString()))));
         List<String> groupCounts = new ArrayList<>();
         groupMap.forEach((group, count) -> groupCounts.add(JSON.toJSONString(new Result<>(group, count.toString()))));
         this.send2User(JSON.toJSONString(new Result<>(userCounts,"用户未读消息统计")),userId);
@@ -209,11 +213,12 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
 
 
     @Override
-    public void onClose() {
+    public void onClose(UserDto userDto) {
         // 1. 从在线好友列表中剔除当前用户的Session对象,
-        try (Session ignored = ChatService.ONLINE_USERS.remove(UserHolder.currentUserId())) {
+        Long userId = userDto.getId();
+        try (Session ignored = ChatService.ONLINE_USERS.remove(userId)) {
             // 2. 通知其他所有用户当前用户已下线
-            this.broadcastAllUser(JSON.toJSONString(new Result<>(userService.getById(UserHolder.currentUserId()), "用户已下线")));
+            this.broadcastAllUser(JSON.toJSONString(new Result<>(userService.getById(userId), "用户已下线")));
         } catch (IOException e) {
             log.error("session关闭错误", e);
         }

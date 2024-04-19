@@ -12,8 +12,8 @@ import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.pojo.vo.Result;
 import com.harvey.hvideo.service.ChatService;
 import com.harvey.hvideo.service.GroupService;
-import com.harvey.hvideo.service.SessionRecordService;
 import com.harvey.hvideo.service.UserService;
+import com.harvey.hvideo.util.RedisConstants;
 import com.harvey.hvideo.util.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -39,7 +39,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
     private StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public void onMessage(GroupCommand groupCommand) {
+    public void onMessage(GroupCommand groupCommand, UserDto userDto) {
         // StandardChat from           target
         // Chat         当前用户       getTarget    群发content, 是文字就存Redis, 图片忽略
         // Create       当前用户       MembersIds    content: 群聊名, 群发这些人, 您被xx拉入群聊, 群聊的ID, RedisHash,Key:ID=群聊名,群成员, 数据库, 群聊ID, 群聊名
@@ -99,7 +99,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
         String[] existUserIdstring = users.stream().map(user -> user.getId().toString()).toArray(String[]::new);
         Set<Long> existUserIds = users.stream().map(User::getId).collect(Collectors.toSet());
         // 存入Redis
-        stringRedisTemplate.opsForSet().add(SessionRecordService.GROUP_MEMBER_KEY + groupId, existUserIdstring);
+        stringRedisTemplate.opsForSet().add(RedisConstants.GROUP_MEMBER_KEY + groupId, existUserIdstring);
         // 创建返回消息
         StringBuilder builder = new StringBuilder();
         User nowUser = userService.getById(UserHolder.currentUserId());
@@ -115,7 +115,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
     private static final ExecutorService SINGLE = Executors.newSingleThreadExecutor();
 
     private void quit(Long userId, Long groupId) {
-        String membersKey = SessionRecordService.GROUP_MEMBER_KEY + groupId;
+        String membersKey = RedisConstants.GROUP_MEMBER_KEY + groupId;
         String userIdString = userId.toString();
         Boolean isMember = stringRedisTemplate.opsForSet()
                 .isMember(membersKey, userIdString);
@@ -151,7 +151,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
             // 删除Redis信息
             stringRedisTemplate.delete(membersKey);
             // 删除该群的Redis聊天记录
-            String chatKey = SessionRecordService.GROUP_CONTENT_KEY + groupId;
+            String chatKey = RedisConstants.GROUP_CONTENT_KEY + groupId;
             Set<String> removeIds = stringRedisTemplate.opsForZSet().range(chatKey, 0L, System.currentTimeMillis());
             stringRedisTemplate.delete(chatKey);
             if (removeIds != null && !removeIds.isEmpty()) {
@@ -166,7 +166,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
 
 
     private void join(Long userId, Long groupId) {
-        String membersKey = SessionRecordService.GROUP_MEMBER_KEY + groupId;
+        String membersKey = RedisConstants.GROUP_MEMBER_KEY + groupId;
         if (userId == null || groupId == null) {
             return;
         }
@@ -187,23 +187,20 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
 
 
     private void chat(Long from, Long groupId, String content) {
-        chatService.filter(content);
-        // 封装Result , 存到Redis, 存到MySQL, 发送
-        UserDto userDto = UserHolder.getUser();
-        Group group = this.getById(groupId);
-        if (group == null) {
-            Result<?>  result = new Result<>(404, "当前群聊不存在");
-            String resultJson = JSON.toJSONString(result);
-            chatService.broadcastUsers(resultJson, List.of(from));
+        Group group;
+        if ((group = getGroup(from, groupId)) == null) {
             return;
         }
+        // 封装Result , 存到Redis, 存到MySQL, 发送
+        UserDto userDto = UserHolder.getUser();
+        chatService.filter(content);
         Result<MessageDto> result = new Result<>(new MessageDto(userDto, group, content), "群聊文字");
         String resultJson = JSON.toJSONString(result);
         SINGLE.execute(() -> {
             // 存到MySQL
             int contentId = chatService.insert(new Message(from, content, null, groupId));
             // 存到Redis, key是群聊ID,  value是contentID, score是当前时间
-            String key = SessionRecordService.GROUP_CONTENT_KEY + groupId;
+            String key = RedisConstants.GROUP_CONTENT_KEY + groupId;
             stringRedisTemplate.opsForZSet().add(key, String.valueOf(contentId), System.currentTimeMillis());
         });
         chatService.broadcastUsers(resultJson, membersFromRedis(groupId));
@@ -211,23 +208,32 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
 
 
     private void chat(Long from, Long groupId, byte[] image) {
-        UserDto userDto = UserHolder.getUser();
-        Group group = this.getById(groupId);
-        if (group == null) {
-            Result<?> result = new Result<>(404, "当前群聊不存在");
-            String resultJson = JSON.toJSONString(result);
-            chatService.broadcastUsers(resultJson, List.of(from));
+
+        Group group;
+        if ((group = getGroup(from, groupId)) == null) {
             return;
         }
+        UserDto userDto = UserHolder.getUser();
         Result<?> result = new Result<>(new MessageDto(userDto, group, image), "群聊图片");
 
         String resultJson = JSON.toJSONString(result);
         chatService.broadcastUsers(resultJson, membersFromRedis(groupId));
     }
 
+    private Group getGroup(Long from, Long groupId) {
+        Group group = this.getById(groupId);
+        if (group == null) {
+            Result<?> result = new Result<>(404, "当前群聊不存在");
+            String resultJson = JSON.toJSONString(result);
+            chatService.broadcastUsers(resultJson, List.of(from));
+            return null;
+        }
+        return group;
+    }
+
     @Override
     public Set<Long> membersFromRedis(Long groupId) {
-        String membersKey = SessionRecordService.GROUP_MEMBER_KEY + groupId;
+        String membersKey = RedisConstants.GROUP_MEMBER_KEY + groupId;
         Set<String> membersStr = stringRedisTemplate.opsForSet().members(membersKey);
         if (membersStr == null || membersStr.isEmpty()) {
             return Collections.emptySet();

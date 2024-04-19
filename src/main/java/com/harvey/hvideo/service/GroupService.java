@@ -2,6 +2,7 @@ package com.harvey.hvideo.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.harvey.hvideo.pojo.dto.GroupCommand;
+import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.pojo.entity.Group;
 
 import java.util.Set;
@@ -13,7 +14,7 @@ import java.util.Set;
  * @date 2024-04-12 14:54
  */
 public interface GroupService extends IService<Group>  {
-    void onMessage(GroupCommand groupCommand);
+    void onMessage(GroupCommand groupCommand, UserDto userDto);
 
     Set<Long> membersFromRedis(Long groupId);
 }

@@ -28,10 +28,10 @@ import java.util.List;
 public class SessionRecordController {
     @Resource
     private SessionRecordService sessionRecordService;
-    @GetMapping("/{id}")
-    @ApiOperation("获取用户会话列表, 参数是当前用户")
-    public Result<List<RecordDto>> searchSessionRecord(@PathVariable("id") long id) {
-        return new Result<>(sessionRecordService.searchSessionRecord(id));
+    @GetMapping("/me")
+    @ApiOperation("获取当前用户会话列表")
+    public Result<List<RecordDto>> searchSessionRecord() {
+        return new Result<>(sessionRecordService.searchSessionRecord());
     }
 
     @GetMapping("/session/{id}")

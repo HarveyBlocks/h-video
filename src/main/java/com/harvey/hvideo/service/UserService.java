@@ -24,7 +24,7 @@ public interface UserService extends IService<User> {
      * @return 校验码
      */
     String sendCode(String phone);
-
+    User selectByPhone(String phone);
     /**
      * 用验证码登录验证
      *

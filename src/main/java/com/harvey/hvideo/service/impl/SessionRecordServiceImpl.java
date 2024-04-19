@@ -1,7 +1,9 @@
 package com.harvey.hvideo.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.harvey.hvideo.Constants;
 import com.harvey.hvideo.dao.SessionRecordMapper;
 import com.harvey.hvideo.pojo.dto.MessageDto;
 import com.harvey.hvideo.pojo.dto.RecordDto;
@@ -12,18 +14,18 @@ import com.harvey.hvideo.pojo.entity.User;
 import com.harvey.hvideo.service.ChatService;
 import com.harvey.hvideo.service.SessionRecordService;
 import com.harvey.hvideo.service.UserService;
+import com.harvey.hvideo.util.RedisConstants;
+import com.harvey.hvideo.util.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author <a href="mailto:harvey.blocks@outlook.com">Harvey Blocks</a>
  * @version 1.0
  * @date 2024-04-11 14:46
@@ -32,18 +34,29 @@ import java.util.stream.Collectors;
 public class SessionRecordServiceImpl extends ServiceImpl<SessionRecordMapper, SessionRecord>
         implements SessionRecordService {
 
-
+    @Resource
+    private JdbcTemplate jdbcTemplate;
     @Resource
     private UserService userService;
 
+
     @Override
-    public List<RecordDto> searchSessionRecord(long id) {
+    public List<RecordDto> searchSessionRecord() {
+        long id = UserHolder.currentUserId();
         List<SessionRecord> records = this.lambdaQuery()
                 .eq(SessionRecord::getUser1, id)
                 .or()
                 .eq(SessionRecord::getUser2, id)
                 .list();//还有.one(),.page等
-        List<Long> userIds = records.stream().map(SessionRecord::getUser2).collect(Collectors.toList());
+
+        if (records == null || records.isEmpty()) {
+            return Collections.emptyList();
+        }
+        SessionRecord sessionRecord = records.get(0);
+        Function<SessionRecord, Long> mapper = sessionRecord.getUser1() == id ?
+                SessionRecord::getUser2 : SessionRecord::getUser1;
+        List<Long> userIds = records.stream().map(mapper).collect(Collectors.toList());
+
         List<User> users = userService.lambdaQuery().in(User::getId, userIds).list();
         List<RecordDto> result = new ArrayList<>();
         for (int i = 0; i < users.size(); i++) {
@@ -54,6 +67,8 @@ public class SessionRecordServiceImpl extends ServiceImpl<SessionRecordMapper, S
         return result;
     }
 
+
+
     @Override
     public Long searchSessionRecordId(long user1, long user2) {
         SessionRecord one = this.lambdaQuery()
@@ -63,7 +78,7 @@ public class SessionRecordServiceImpl extends ServiceImpl<SessionRecordMapper, S
                 .eq(SessionRecord::getUser2, user1)
                 .eq(SessionRecord::getUser1, user2)
                 .one();
-        return one==null?null:one.getId();
+        return one == null ? null : one.getId();
 
     }
 
@@ -90,14 +105,14 @@ public class SessionRecordServiceImpl extends ServiceImpl<SessionRecordMapper, S
     @Override
     public List<MessageDto> viewRecord(long id) {
         long end = System.currentTimeMillis();
-        Set<String> contentIdStrings = stringRedisTemplate.opsForZSet().range(PERSON_CONTENT_KEY + id, end - TIME_INTERVAL, end);
-        if (contentIdStrings == null||contentIdStrings.isEmpty()) {
+        Set<String> contentIdStrings = stringRedisTemplate.opsForZSet().range(RedisConstants.PERSON_CONTENT_KEY + id, end - Constants.CHAT_RECORD_TIME_INTERVAL, end);
+        if (contentIdStrings == null || contentIdStrings.isEmpty()) {
             // 没有这个聊天记录
             return Collections.emptyList();
         }
         List<Long> contentIds = contentIdStrings.stream().map(Long::parseLong).collect(Collectors.toList());
         List<Message> messages = chatService.lambdaQuery().in(Message::getId, contentIds).list();
-        if (messages==null||messages.isEmpty()){
+        if (messages == null || messages.isEmpty()) {
             return Collections.emptyList();
         }
         return message2ContentMessage(messages);
@@ -107,14 +122,13 @@ public class SessionRecordServiceImpl extends ServiceImpl<SessionRecordMapper, S
         ArrayList<MessageDto> contentMessages = new ArrayList<>();
         for (Message message : messages) {
             User user = userService.getById(message.getFromId());
-            if (user==null){
+            if (user == null) {
                 continue;
             }
-            contentMessages.add(new MessageDto(new UserDto(user),message.getContent()));
+            contentMessages.add(new MessageDto(new UserDto(user), message.getContent()));
         }
         return contentMessages;
     }
-
 
 
 }

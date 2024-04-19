@@ -90,7 +90,7 @@ public class VideoController {
     }
 
     /**
-     * 热门视频 TODO ES, Click排序
+     * 热门视频
      *
      * @param current 当前页码
      * @return 热门视频集合
