@@ -1,8 +1,6 @@
 package com.harvey.hvideo;
 
-import com.harvey.hvideo.pojo.dto.UserDto;
 import com.harvey.hvideo.service.ChatService;
-import com.harvey.hvideo.util.UserHolder;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 

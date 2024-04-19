@@ -35,8 +35,6 @@ public class SessionRecordServiceImpl extends ServiceImpl<SessionRecordMapper, S
         implements SessionRecordService {
 
     @Resource
-    private JdbcTemplate jdbcTemplate;
-    @Resource
     private UserService userService;
 
 
@@ -48,7 +46,6 @@ public class SessionRecordServiceImpl extends ServiceImpl<SessionRecordMapper, S
                 .or()
                 .eq(SessionRecord::getUser2, id)
                 .list();//还有.one(),.page等
-
         if (records == null || records.isEmpty()) {
             return Collections.emptyList();
         }

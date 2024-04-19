@@ -101,13 +101,14 @@ public class ChatEndpoint {
      */
     @OnClose
     public void onClose(CloseReason closeReason) {
+        log.debug(closeReason.toString());
         chatService.onClose(userDto);
         doAfter(userDto);
     }
 
     // 连接异常
     @OnError
-    public void onError(Throwable throwable) throws IOException {
+    public void onError(Throwable throwable) {
         log.info("[websocket] 连接异常：，throwable", throwable);
     }
     private void doAfter(UserDto userDto){
@@ -117,12 +118,6 @@ public class ChatEndpoint {
         stringRedisTemplate.opsForHash().increment(tokenKey, TIME_FIELD, 1);
     }
     private static StringRedisTemplate stringRedisTemplate;
-
-    private static JwtTool jwtTool;
-    @Autowired
-    public void setJwtTool(JwtTool jwtTool){
-        ChatEndpoint.jwtTool = jwtTool;
-    }
     @Autowired
     public void setStringRedisTemplate(StringRedisTemplate stringRedisTemplate){
         ChatEndpoint.stringRedisTemplate = stringRedisTemplate;
