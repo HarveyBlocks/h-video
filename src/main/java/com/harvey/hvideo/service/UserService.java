@@ -56,6 +56,5 @@ public interface UserService extends IService<User> {
 
     UserDto queryUserByIdWithRedisson(Long userId) throws InterruptedException;
 
-    @Deprecated
     UserDto queryUserById(Long userId);
 }

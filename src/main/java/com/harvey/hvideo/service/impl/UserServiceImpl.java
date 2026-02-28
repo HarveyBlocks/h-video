@@ -29,6 +29,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -130,7 +131,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 无法决定是密码登录还是验证码登录的情况
             throw new BadRequestException("请正确输入验证码或密码");
         }
-        if (code != null&&!code.isEmpty()) {
+        if (code != null && !code.isEmpty()) {
             if (code.length() != 6) {
                 throw new BadRequestException("请输入正确格式的验证码");
             }
@@ -217,13 +218,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 更新
 
         String tokenKey = RedisConstants.QUERY_USER_KEY + jwtTool.parseToken(token);
+        String lastTime = Optional.ofNullable((String) stringRedisTemplate.opsForHash().get(tokenKey, TIME_FIELD))
+                .orElseGet(() -> Constants.RESTRICT_REQUEST_TIMES);
         stringRedisTemplate.delete(tokenKey);
         // 更新数据库
         UserService userService = (UserService) AopContext.currentProxy();
+        UserHolder.removeUser();
         boolean update = userService.updateById(user);
         if (!update) {
             throw new BadRequestException("更新失败,无此用户");
         }
+        UserHolder.saveUser(new UserDto(user));
+        saveUser2Redis(tokenKey, user2Map(UserHolder.getUser()), Long.parseLong(lastTime));
     }
 
 
@@ -245,7 +251,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private final RedissonLock<UserDto> redissonLock;
 
-    public UserServiceImpl(RedissonLock<UserDto>  redissonLock) {
+    public UserServiceImpl(RedissonLock<UserDto> redissonLock) {
         this.redissonLock = redissonLock;
     }
 
@@ -260,7 +266,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // Redis里没有数据
             log.debug("缓存不存在用户:" + userId);
             String lockKey = RedisConstants.USER_LOCK_KEY + UserHolder.currentUserId();
-            return redissonLock.asynchronousLock(lockKey, ()-> getFromDbAndWriteToCache(userId, key));
+            return redissonLock.asynchronousLock(lockKey, () -> getFromDbAndWriteToCache(userId, key));
         } else if (((String) userFieldMap.get("id")).isEmpty()) {
             log.warn("Redis中存在的假数据" + userId);
             return null;
@@ -275,8 +281,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new RuntimeException(e);
         }
     }
-
-
 
 
     private static Map<String, String> user2Map(UserDto user) {
@@ -327,8 +331,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             stringRedisTemplate.expire(key, plusRandomSec(ttl), TimeUnit.SECONDS);
         }
     }
+
     /**
      * 通过随机改变ttl, 防止雪崩
+     *
      * @return 增加了随机值的ttl
      */
     private Long plusRandomSec(Long ttl) {
@@ -350,6 +356,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 以及, 这里使用Hash,如果还要在做, 我可能会使用json
      *
      * @return 如果用户不存在, 返回null
+     * @deprecated 没用
      */
     @Override
     @Deprecated
@@ -403,14 +410,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
 
-
     @Deprecated
     private boolean lock(@NonNull String lockKey) {
         log.debug("lock");
         Boolean exit = stringRedisTemplate.opsForValue()
                 .setIfAbsent(lockKey,
                         "", RedisConstants.LOCK_TTL,
-                        TimeUnit.SECONDS);
+                        TimeUnit.SECONDS
+                );
         // 锁的时效设置成业务完成时间的十倍二十倍, 防止意外
         // 当然意外还是有可能发生, 例如锁的意外释放
         // 释放锁的人必须是当前线程的人,这样可以解决一部分问题

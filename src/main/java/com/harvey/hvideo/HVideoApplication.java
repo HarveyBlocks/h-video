@@ -19,13 +19,7 @@ import org.springframework.context.event.ContextClosedEvent;
 @MapperScan(basePackages = "com.harvey.hvideo.dao")
 @SpringBootApplication
 @EnableAspectJAutoProxy(exposeProxy = true)
-public class HVideoApplication implements ApplicationListener<ContextClosedEvent> {
-
-    @Override
-    public void onApplicationEvent(ContextClosedEvent event) {
-        IpTool.close();
-        System.out.println(TimeUtil.toTime(event.getTimestamp())+", Ip文件已关闭");
-    }
+public class HVideoApplication {
 
 
     public static void main(String[] args) {

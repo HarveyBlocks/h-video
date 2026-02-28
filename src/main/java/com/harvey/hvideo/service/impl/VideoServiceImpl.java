@@ -97,9 +97,10 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @PostConstruct
     public void delClickedHistory() {
         Timer timer = new Timer();
-        timer.schedule(new ClickedHistory(),CLEAR_CLICK_HISTORY_WAIT_MILLIONS);
+        timer.schedule(new ClickedHistory(), CLEAR_CLICK_HISTORY_WAIT_MILLIONS);
     }
-    class ClickedHistory extends TimerTask{
+
+    class ClickedHistory extends TimerTask {
         @Override
         public void run() {
             Set<String> keys = null;
@@ -120,9 +121,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     @Override
     public List<VideoDto> queryHotVideo(Integer current) {
         // 根据用户查询
-        Page<Video> page = this.query()
-                .orderByDesc("click")
-                .page(new Page<>(current, Constants.MAX_PAGE_SIZE));
+        Page<Video> page = this.query().orderByDesc("click").page(new Page<>(current, Constants.MAX_PAGE_SIZE));
         // 获取当前页数据
         List<Video> records = page.getRecords();
         // 查询用户
@@ -137,7 +136,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     public List<VideoDto> queryMyVideo(Integer current) {
         // 获取登录用户
         UserDto user = UserHolder.getUser();
-        if(user==null){
+        if (user == null) {
             return Collections.emptyList();
         }
         // 根据用户查询
@@ -145,9 +144,10 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 .select("id", "title", "kicked", "images", "comments")
                 .eq("user_id", user.getId())
                 .page(new Page<>(current, Constants.MAX_PAGE_SIZE));
-        if(page==null){
+        if (page == null) {
             return Collections.emptyList();
         }
+
         // 获取当前页数据
         return page.getRecords().stream().map(VideoDto::new).collect(Collectors.toList());
     }
@@ -165,14 +165,27 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
     public void sendVideoToFans(Long videoId) {
         // 查询视频作者的所有粉丝
         //select `user_id` from `tb_follow` where `follow_user_id` = 2;
-        List<Follow> follows = followService.query().select("fan_id").eq("author_id", UserHolder.currentUserId().toString()).list();
+        List<Follow> follows = followService.query()
+                .select("fan_id")
+                .eq("author_id", UserHolder.currentUserId().toString())
+                .list();
         for (Follow follow : follows) {
-            stringRedisTemplate.opsForZSet().add(FollowService.followedInboxKey(follow.getFanId()), String.valueOf(videoId), System.currentTimeMillis());
+            stringRedisTemplate.opsForZSet().add(
+                    FollowService.followedInboxKey(follow.getFanId()),
+                    String.valueOf(videoId),
+                    System.currentTimeMillis()
+            );
         }
     }
 
     private Set<ZSetOperations.TypedTuple<String>> getVideoIdsWithTimestamp(Long lastTimestamp, Integer offset) {
-        return stringRedisTemplate.opsForZSet().reverseRangeByScoreWithScores(FollowService.followedInboxKey(UserHolder.currentUserId()), 0, lastTimestamp, offset, Constants.DEFAULT_PAGE_SIZE);
+        return stringRedisTemplate.opsForZSet().reverseRangeByScoreWithScores(
+                FollowService.followedInboxKey(UserHolder.currentUserId()),
+                0,
+                lastTimestamp,
+                offset,
+                Constants.DEFAULT_PAGE_SIZE
+        );
     }
 
     @Override
@@ -208,8 +221,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
         List<Video> videos = queryCompleteVideos(videoIds);
         log.debug("newOffset=" + newOffset);
         log.debug("minTime=" + minTime);
-        return new ScrollResult<>(videos.stream().map(VideoDto::new)
-                .collect(Collectors.toList()), minTime, newOffset);
+        return new ScrollResult<>(videos.stream().map(VideoDto::new).collect(Collectors.toList()), minTime, newOffset);
     }
 
 
@@ -225,7 +237,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
 
         SearchSourceBuilder s = new SearchSourceBuilder();
         // 2. 组织DSL语句
-        MatchQueryBuilder matchQuery = new MatchQueryBuilder("all",tittle);
+        MatchQueryBuilder matchQuery = new MatchQueryBuilder("all", tittle);
         s.query(matchQuery);
         s.sort("click", SortOrder.DESC);
         s.from((current - 1) * Constants.MAX_PAGE_SIZE);
@@ -253,8 +265,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper, Video> implements
                 // 解析Json字符
                 hit -> new VideoDto(new Video(JSON.parseObject(
                         // 获取数据信息
-                        hit.getSourceAsString(), VideoDoc.class)
-                ))).collect(Collectors.toList());
+                        hit.getSourceAsString(), VideoDoc.class)))).collect(Collectors.toList());
     }
 
 

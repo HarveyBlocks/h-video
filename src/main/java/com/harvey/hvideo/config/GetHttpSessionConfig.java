@@ -24,18 +24,22 @@ import javax.websocket.server.ServerEndpointConfig;
 @Slf4j
 public class GetHttpSessionConfig extends ServerEndpointConfig.Configurator {
 
-    private static StringRedisTemplate stringRedisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
 
-    private static JwtTool jwtTool;
+    private  JwtTool jwtTool;
 
     @Autowired
     public void setJwtTool(JwtTool jwtTool) {
-        GetHttpSessionConfig.jwtTool = jwtTool;
+        // TODO TO BE DELETE 不好的设计
+        //  GetHttpSessionConfig.jwtTool = jwtTool;
+        this.jwtTool = jwtTool;
     }
 
     @Autowired
     public void setStringRedisTemplate(StringRedisTemplate stringRedisTemplate) {
-        GetHttpSessionConfig.stringRedisTemplate = stringRedisTemplate;
+        // TODO TO BE DELETE 不好的设计
+        //  GetHttpSessionConfig.stringRedisTemplate = stringRedisTemplate;
+        this.stringRedisTemplate = stringRedisTemplate;
     }
 
     /**

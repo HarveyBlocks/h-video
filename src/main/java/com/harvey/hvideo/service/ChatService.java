@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public interface ChatService extends IService<Message> {
     // ConcurrentHashMap, 线程安全的Map集合
-    Map<Long, Session> ONLINE_USERS = new ConcurrentHashMap<>();
+
 
     void broadcastUsers(String json, Collection<Long> userIds);
 

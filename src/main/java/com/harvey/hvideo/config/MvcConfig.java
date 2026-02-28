@@ -60,7 +60,7 @@ public class MvcConfig implements WebMvcConfigurer {
                 .addPathPatterns(includePaths);
 
         registry.addInterceptor(new AuthorizeInterceptor())
-                .excludePathPatterns(includePaths);
+                .addPathPatterns(includePaths);
     }
 
 

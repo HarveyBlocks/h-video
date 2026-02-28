@@ -25,10 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.websocket.Session;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -43,14 +41,14 @@ import java.util.concurrent.Executors;
 public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> implements ChatService {
     @Resource
     private UserService userService;
-
+    private final Map<Long, Session> onlineUsers = new ConcurrentHashMap<>();
     /**
      * 向特定用户发送消息
      *
      * @param json json数据
      */
     private void send2User(String json, Long userId) {
-        Session session = ONLINE_USERS.get(userId);
+        Session session = onlineUsers.get(userId);
         if (session == null) {
             // 用户已下线
             // 根据用户ID找到用户的收件箱
@@ -82,7 +80,7 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
      */
     private void broadcastAllUser(String json) {
         // 遍历map集合
-        broadcastUsers(json, ONLINE_USERS.keySet());
+        broadcastUsers(json, onlineUsers.keySet());
     }
 
     @Override
@@ -174,7 +172,7 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
     public void onOpen(Session session, UserDto user) {
         // 1.2 存入集合. 需要键username
         Long userId = user.getId();
-        ChatService.ONLINE_USERS.put(userId, session);
+        onlineUsers.put(userId, session);
         String inboxKey = RedisConstants.USER_INBOX_KEY + userId;
         String json;
         HashMap<Group, Integer> groupMap = new HashMap<>();
@@ -212,7 +210,7 @@ public class ChatServiceImpl extends ServiceImpl<MessageMapper, Message> impleme
     public void onClose(UserDto userDto) {
         // 1. 从在线好友列表中剔除当前用户的Session对象,
         Long userId = userDto.getId();
-        try (Session ignored = ChatService.ONLINE_USERS.remove(userId)) {
+        try (Session ignored = onlineUsers.remove(userId)) {
             // 2. 通知其他所有用户当前用户已下线
             this.broadcastAllUser(JSON.toJSONString(new Result<>(userService.getById(userId), "用户已下线")));
         } catch (IOException e) {

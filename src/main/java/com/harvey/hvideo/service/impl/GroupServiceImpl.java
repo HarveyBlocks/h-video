@@ -14,7 +14,6 @@ import com.harvey.hvideo.service.ChatService;
 import com.harvey.hvideo.service.GroupService;
 import com.harvey.hvideo.service.UserService;
 import com.harvey.hvideo.util.RedisConstants;
-import com.harvey.hvideo.util.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -62,23 +61,24 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
             target = targets.get(0);
         }
         String content = groupCommand.getContent();
+        Long fromId = userDto.getId();
         switch (mainCommand) {
             case CREATE:
-                targets.add(UserHolder.currentUserId());
-                this.create(content, targets);
+                targets.add(fromId);
+                this.create(fromId, content, targets);
                 break;
             case QUIT:
-                this.quit(UserHolder.currentUserId(), target);
+                this.quit(fromId, target);
                 break;
             case JOIN:
-                this.join(UserHolder.currentUserId(), target);
+                this.join(fromId, target);
                 break;
             case CHAT:
                 if (content != null) {
-                    this.chat(UserHolder.currentUserId(), target, content);
+                    this.chat(userDto, target, content);
                 } else if (groupCommand.getImage() != null) {
                     log.warn("建议先用图片上传接口传输图片, 然后获取到图片地址, 然后吧图片地址作为Content过来, 走content的if分支");
-                    this.chat(UserHolder.currentUserId(), target, groupCommand.getImage());
+                    this.chat(userDto, target, groupCommand.getImage());
                 } else {
                     log.error("啥都没有你传个啥子嘞?");
                 }
@@ -88,7 +88,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
     @Resource
     private UserService userService;
 
-    private void create(String name, List<Long> members) {
+    private void create(Long fromId, String name, List<Long> members) {
         if (name == null || members == null || members.size() <= 2) {
             return;
         }
@@ -102,7 +102,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
         stringRedisTemplate.opsForSet().add(RedisConstants.GROUP_MEMBER_KEY + groupId, existUserIdstring);
         // 创建返回消息
         StringBuilder builder = new StringBuilder();
-        User nowUser = userService.getById(UserHolder.currentUserId());
+        User nowUser = userService.getById(fromId);
         builder.append("您已被\"").append(nowUser.getNickName()).append("\"拉入群聊: \"").append(name)
                 .append("\", 成员包括: ");
         users.forEach(user -> builder.append(".\"").append(user.getNickName()).append("\", "));
@@ -186,19 +186,18 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
     }
 
 
-    private void chat(Long from, Long groupId, String content) {
+    private void chat(UserDto from, Long groupId, String content) {
         Group group;
-        if ((group = getGroup(from, groupId)) == null) {
+        if ((group = getGroup(from.getId(), groupId)) == null) {
             return;
         }
         // 封装Result , 存到Redis, 存到MySQL, 发送
-        UserDto userDto = UserHolder.getUser();
         chatService.filter(content);
-        Result<MessageDto> result = new Result<>(new MessageDto(userDto, group, content), "群聊文字");
+        Result<MessageDto> result = new Result<>(new MessageDto(from, group, content), "群聊文字");
         String resultJson = JSON.toJSONString(result);
         SINGLE.execute(() -> {
             // 存到MySQL
-            int contentId = chatService.insert(new Message(from, content, null, groupId));
+            int contentId = chatService.insert(new Message(from.getId(), content, null, groupId));
             // 存到Redis, key是群聊ID,  value是contentID, score是当前时间
             String key = RedisConstants.GROUP_CONTENT_KEY + groupId;
             stringRedisTemplate.opsForZSet().add(key, String.valueOf(contentId), System.currentTimeMillis());
@@ -207,14 +206,13 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
     }
 
 
-    private void chat(Long from, Long groupId, byte[] image) {
+    private void chat(UserDto from, Long groupId, byte[] image) {
 
         Group group;
-        if ((group = getGroup(from, groupId)) == null) {
+        if ((group = getGroup(from.getId(), groupId)) == null) {
             return;
         }
-        UserDto userDto = UserHolder.getUser();
-        Result<?> result = new Result<>(new MessageDto(userDto, group, image), "群聊图片");
+        Result<?> result = new Result<>(new MessageDto(from, group, image), "群聊图片");
 
         String resultJson = JSON.toJSONString(result);
         chatService.broadcastUsers(resultJson, membersFromRedis(groupId));
